@@ -47,55 +47,57 @@ export default function UserGame() {
 
   useEffect(() => {
     if (!userEmail || !gameId) return;
-
+  
     const fetchGameData = async () => {
       try {
         const gameRef = doc(db, userEmail, gameId);
         const gameSnap = await getDoc(gameRef);
-
+  
         if (!gameSnap.exists()) {
           setError("Game not found.");
           setLoading(false);
           return;
         }
-
+  
         setGameData({ id: gameSnap.id, ...gameSnap.data() } as GameData);
       } catch (err) {
         setError("Failed to fetch game data.");
       }
       setLoading(false);
     };
-
+  
     fetchGameData();
   }, [userEmail, gameId]);
-
+  
   useEffect(() => {
     if (!gameId || !gameData) return;
-
+  
     const fetchScores = async () => {
       try {
-        // Access the playerPoints collection where scores are stored
         const scoresRef = doc(db, "playerPoints", gameId);
         const scoresSnap = await getDoc(scoresRef);
-
+  
         if (scoresSnap.exists()) {
           const scoresData = scoresSnap.data();
-          // Get the score for Player One and Player Two
           setPlayerScores({
             playerOne: scoresData?.[gameData.playerOne] || 0,
             playerTwo: scoresData?.[gameData.playerTwo] || 0,
           });
         } else {
-          setError("No scores found.");
+          // Set default scores if no scores found
+          setPlayerScores({
+            playerOne: 0,
+            playerTwo: 0,
+          });
         }
       } catch (err) {
         setError("Failed to fetch scores.");
       }
     };
-
+  
     fetchScores();
   }, [gameId, gameData]);
-
+  
   const handlePointSelection = (cardIndex: number, point: number) => {
     setSelectedPoints((prev) => ({
       ...prev,

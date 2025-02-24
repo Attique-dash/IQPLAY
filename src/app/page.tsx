@@ -13,7 +13,7 @@ import player from "../../public/images/player.png";
 import pc from "../../public/images/pc.png";
 import tages from "../../public/images/tages.png";
 import coll from "../../public/images/collgame.png";
-import Footer from "../components/footer";
+import Footer from "@/components/footer";
 
 export default function Home() {
   const [userId, setUserId] = useState<string | null>(null);

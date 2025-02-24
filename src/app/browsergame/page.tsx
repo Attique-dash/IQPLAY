@@ -7,7 +7,7 @@ import { collection, getDocs } from "firebase/firestore";
 import Image from "next/image";
 
 interface BrowserGameProps {
-  setBroGame: React.Dispatch<React.SetStateAction<boolean>>;
+  setBroGame?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export default function BrowserGame({ setBroGame }: BrowserGameProps) {
@@ -183,7 +183,7 @@ export default function BrowserGame({ setBroGame }: BrowserGameProps) {
 
       <div className="flex gap-4 p-6 justify-center">
         <button
-          onClick={() => setBroGame(true)}
+          onClick={() => setBroGame?.(true)} // Add optional chaining (?.)
           className="px-6 py-3 text-white font-semibold text-lg rounded-2xl shadow-lg bg-gradient-to-r from-gray-500 to-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
         >
           Create a new game

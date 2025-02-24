@@ -171,9 +171,6 @@ export default function Quiz() {
     const playerOneScore = playerScores.playerOne;
     const playerTwoScore = playerScores.playerTwo;
 
-    console.log("Player 1 Score:", playerOneScore);
-    console.log("Player 2 Score:", playerTwoScore);
-
     let playerOnePoints = 0;
     let playerTwoPoints = 0;
 

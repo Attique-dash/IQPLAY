@@ -39,7 +39,7 @@ export default function Dashboard() {
     { title: string; image: any }[]
   >([]);
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [brogame, setBroGame] = useState(false);
+  const [broGame, setBroGame] = useState(false);
   const [gameData, setGameData] = useState({
     gameName: "",
     playerOne: "",
@@ -137,14 +137,14 @@ export default function Dashboard() {
         return;
       }
 
-      await addDoc(userGameCollection, {
+      const docRef = await addDoc(userGameCollection, {
         ...gameData,
         selectedCards,
         createdAt: Timestamp.now(),
       });
 
       toast.success(" Your Game create successfully!");
-      router.push("/creategame");
+      router.push(`/creategame?gameId=${docRef.id}`);
     } catch (error) {
       console.error("Error saving game info:", error);
       toast.error("Something went wrong. Please try again.");
@@ -159,9 +159,9 @@ export default function Dashboard() {
         className="text-center font-semibold"
       />
       <div>
-        {!brogame ? (
-          <BrowserGame setBroGame={setBroGame}/>
-        ) : (
+        {!broGame ? (
+          <BrowserGame setBroGame={setBroGame} />
+    ) : (
           <>
             <div className="mt-10 flex flex-col items-center">
               <h1 className="font-bold text-2xl px-6 py-3 rounded-lg relative">
