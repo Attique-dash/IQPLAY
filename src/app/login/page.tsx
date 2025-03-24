@@ -32,7 +32,7 @@ export default function Login() {
 
   const logoClick = () => {
     router.push("/");
-  }
+  };
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
@@ -43,19 +43,18 @@ export default function Login() {
 
   const PhoneInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value;
-      value = value.replace(/[^0-9]/g, "");
+    value = value.replace(/[^0-9]/g, "");
     if (value.length > 11) {
       value = value.slice(0, 11);
     }
-      if (value.length > 3) {
+    if (value.length > 3) {
       value = value.replace(/^(\d{4})(\d{0,7})$/, "$1-$2");
     }
-      setFormData((prevData) => ({
+    setFormData((prevData) => ({
       ...prevData,
       phoneNo: value,
     }));
   };
-        
 
   const handleFormSwitch = () => {
     setIsRegistering(!isRegistering);
@@ -64,9 +63,14 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-  
+
     if (isRegistering) {
-      if (!formData.firstName || !formData.phoneNo || !formData.email || !formData.password) {
+      if (
+        !formData.firstName ||
+        !formData.phoneNo ||
+        !formData.email ||
+        !formData.password
+      ) {
         setError("Please fill in all fields");
         toast.error("Please fill in all fields");
         return;
@@ -78,24 +82,28 @@ export default function Login() {
         return;
       }
     }
-  
+
     const { firstName, lastName, phoneNo, email, password } = formData;
-  
+
     try {
       if (isRegistering) {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
         const user = userCredential.user;
-  
+
         setSuccess("Your account has been created successfully");
         toast.success("Your account has been created successfully");
-  
+
         await setDoc(doc(db, "users", user.uid), {
           firstName,
           lastName,
           phoneNo,
           email,
         });
-  
+
         router.push("/dashboard");
       } else {
         await signInWithEmailAndPassword(auth, email, password);
@@ -131,22 +139,24 @@ export default function Login() {
       }
     }
   };
-      
+
   return (
-    <div className="font-sans p-4 mt-5">
-      <div className="max-w-6xl mx-auto relative bg-white shadow-lg md:h-[530px] rounded-3xl overflow-hidden">
+    <div className={`flex items-center justify-center min-h-screen bg-gray-100 px-4 ${ isRegistering ? "mt-5 mb-5" : "" }`}>
+      <div className="relative w-full max-w-6xl bg-white shadow-lg rounded-3xl overflow-hidden p-6">
         <div className="absolute -bottom-6 -left-6 w-20 h-20 rounded-full bg-amber-600"></div>
         <div className="absolute -top-6 -right-6 w-20 h-20 rounded-full bg-blue-400"></div>
-        <div className="flex items-center gap-4 p-6">
-          <Image
-          onClick={logoClick}
-            src={logo}
-            alt="Logo"
-            width={50}
-            height={50}
-            className="mt-0 cursor-pointer"
-          />
-          <h4 className="text-3xl font-bold font-serif text-blue-500 md:ml-[90px]">
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-4">
+          <div className="absolute top-5 left-5 cursor-pointer">
+            <Image
+              onClick={logoClick}
+              src={logo}
+              alt="Logo"
+              width={50}
+              height={50}
+              className="mt-0"
+            />
+          </div>
+          <h4 className="text-2xl md:text-3xl font-bold font-serif text-blue-500 text-center md:ml-[150px]">
             {isRegistering ? (
               <>
                 Welcome <span className="text-amber-600">to Game</span>
@@ -159,23 +169,23 @@ export default function Login() {
           </h4>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 px-6">
-          <div className="md:mt-[25px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <div className="hidden md:block">
             <video
               src="/video/login.mp4"
               loop
               muted
               autoPlay
-              className="w-full h-auto md:h-[320px] object-contain rounded-md"
+              className={`w-full h-auto md:h-[320px] object-contain rounded-md ${isRegistering ? "mt-14" : ""}`}
             />
           </div>
           <form
             onSubmit={handleSubmit}
-            className={`max-w-md mx-auto bg-gray-100 rounded-2xl shadow-md transition-all duration-300 w-[500px] ${
-              isRegistering ? "h-[460px] relative bottom-12" : "h-[300px]"
+            className={`mx-auto bg-gray-100 rounded-2xl shadow-md transition-all duration-300 w-full max-w-md p-6 min-h-[300px] ${
+              isRegistering ? "min-h-[460px]" : ""
             }`}
           >
-            <h2 className="text-2xl text-blue-600 mt-5 font-bold text-center mb-5">
+            <h2 className="text-2xl text-blue-600 font-bold text-center mb-5">
               {isRegistering ? "Create Account" : "Log In"}
             </h2>
             {error ? (

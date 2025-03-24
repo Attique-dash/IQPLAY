@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "../../firebase/firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
+import { FaSearch } from "react-icons/fa";
 import Image from "next/image";
 
 interface BrowserGameProps {
@@ -117,25 +118,37 @@ export default function BrowserGame({ setBroGame }: BrowserGameProps) {
     }
   };
 
-  if (loading) return <p className="text-center text-lg">Loading...</p>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-lg font-semibold">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-4 mt-5">
-      <div className="mb-6 flex justify-center">
+      {/* Search Bar & Total Games Counter */}
+      <div className="mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="absolute ml-[6px] hidden md:block">
+      <FaSearch className="text-lg text-blue-500" />
+        </div>
         <input
           type="text"
           placeholder="Search your game name..."
           value={searchQuery}
           onChange={handleSearch}
-          className="w-full pl-5 max-w-md p-2 border rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full md:max-w-md p-2 shadow-lg pl-8 border rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <div className=" bg-gray-400 border-blue-500 border-2 rounded-lg p-3 text-xl ml-40 font-semibold text-white">
+        <div className="bg-gray-400 border-blue-500 border-2 rounded-lg p-3 text-lg sm:text-xl font-semibold text-white text-center w-full md:w-auto">
           You have a total of {totalGames} Games
         </div>
       </div>
 
+      {/* Error Message */}
       {error && <p className="text-center text-red-500">{error}</p>}
 
+      {/* Game Cards Grid */}
       {filteredGames.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {filteredGames.map((game) => (
@@ -143,7 +156,9 @@ export default function BrowserGame({ setBroGame }: BrowserGameProps) {
               <h2 className="font-semibold text-2xl text-blue-500 text-center mb-2">
                 {game.gameName}
               </h2>
-              <div className="grid grid-cols-3 gap-3 mt-4 justify-items-center">
+
+              {/* Game Cards Images */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4 justify-items-center">
                 {game.selectedCards?.map(
                   (
                     card: { image: { src: string }; title: string },
@@ -165,6 +180,7 @@ export default function BrowserGame({ setBroGame }: BrowserGameProps) {
                 )}
               </div>
 
+              {/* Play Now Button */}
               <button
                 className={`mt-4 text-white text-xl font-semibold px-4 py-2 rounded w-full ${
                   totalGames > 0
@@ -181,17 +197,18 @@ export default function BrowserGame({ setBroGame }: BrowserGameProps) {
         </div>
       )}
 
-      <div className="flex gap-4 p-6 justify-center">
+      {/* Buttons Section */}
+      <div className="flex flex-col sm:flex-row gap-4 p-6 justify-center items-center">
         <button
-          onClick={() => setBroGame?.(true)} // Add optional chaining (?.)
-          className="px-6 py-3 text-white font-semibold text-lg rounded-2xl shadow-lg bg-gradient-to-r from-gray-500 to-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
+          onClick={() => setBroGame?.(true)}
+          className="w-full sm:w-auto px-6 py-3 text-white font-semibold text-lg rounded-2xl shadow-lg bg-gradient-to-r from-gray-500 to-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
         >
           Create a new game
         </button>
 
         <button
           onClick={handleBuyGame}
-          className="px-6 py-3 text-white font-semibold text-lg rounded-2xl shadow-lg bg-gradient-to-r from-blue-500 to-gray-500 transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
+          className="w-full sm:w-auto px-6 py-3 text-white font-semibold text-lg rounded-2xl shadow-lg bg-gradient-to-r from-blue-500 to-gray-500 transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
         >
           Buy a game
         </button>

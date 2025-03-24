@@ -9,7 +9,7 @@ import { collection, addDoc, Timestamp, getDocs } from "firebase/firestore";
 import Header from "@/components/header";
 import Image from "next/image";
 import bgvs from "../../../public/images/bgvs.png";
-import ftvs from "../../../public/images/ftvs.jpeg";
+import ftvs from "../../../public/images/ftvs.jpg";
 import Footer from "@/components/footer";
 import circ from "../../../public/images/Cricket.jpg";
 import foot from "../../../public/images/Football.jpg";
@@ -161,17 +161,19 @@ export default function Dashboard() {
       <div>
         {!broGame ? (
           <BrowserGame setBroGame={setBroGame} />
-    ) : (
+        ) : (
           <>
-            <div className="mt-10 flex flex-col items-center">
-              <h1 className="font-bold text-2xl px-6 py-3 rounded-lg relative">
-                <span className="text-blue-500 text-2xl px-2 border-2 p-2 border-x-0 border-yellow-500">
+            <div className="mt-10 flex flex-col items-center px-4 sm:px-6 lg:px-8">
+              {/* Heading */}
+              <h1 className="font-bold text-xl sm:text-2xl px-4 py-3 rounded-lg text-center">
+                <span className="text-blue-500 text-lg sm:text-xl px-2 border-2 p-2 border-x-0 border-yellow-500">
                   Specify the information of the two players.
                 </span>
               </h1>
 
-              <div className="mt-10 w-[600px]">
-                <h2 className="text-yellow-500 font-semibold text-xl mb-2">
+              {/* Game Name Input */}
+              <div className="mt-10 w-full max-w-xl">
+                <h2 className="text-yellow-500 font-semibold text-lg sm:text-xl mb-2">
                   Your Game
                 </h2>
                 <div className="relative mb-5">
@@ -182,25 +184,27 @@ export default function Dashboard() {
                     required
                     value={gameData.gameName}
                     onChange={handleChange}
-                    className="peer w-full px-4 py-3 text-lg border-2 border-gray-400 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300 bg-white shadow-sm transition duration-300"
+                    className="peer w-full px-4 py-3 text-base sm:text-lg border-2 border-gray-400 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300 bg-white shadow-sm transition duration-300"
                   />
                   <label
                     htmlFor="gameName"
-                    className={`absolute left-4 top-3 text-lg px-1 transition-all duration-200 bg-white
-                    ${
-                      gameData.gameName
-                        ? "top-[-1px] text-sm text-blue-500 "
-                        : "text-gray-500"
-                    }`}
+                    className={`absolute left-4 top-3 text-base sm:text-lg px-1 transition-all duration-200 bg-white
+        ${
+          gameData.gameName
+            ? "top-[-10px] text-sm text-blue-500 "
+            : "text-gray-500"
+        }`}
                   >
                     Enter Name
                   </label>
                 </div>
               </div>
 
-              <div className="mt-8 flex items-center gap-6">
-                <div className="relative w-[500px] mt-5">
-                  <h2 className="absolute bottom-16 mb-2 text-yellow-500 font-semibold text-xl">
+              {/* Players Section */}
+              <div className="mt-8 flex flex-col sm:flex-row items-center gap-6 w-full max-w-3xl">
+                {/* First Player Input */}
+                <div className="relative w-full max-w-xs sm:max-w-md">
+                  <h2 className="absolute bottom-16 mb-2 text-yellow-500 font-semibold text-lg sm:text-xl">
                     First Player
                   </h2>
                   <input
@@ -210,38 +214,38 @@ export default function Dashboard() {
                     required
                     value={gameData.playerOne}
                     onChange={handleChange}
-                    className="peer w-full px-4 py-3 text-lg border-2 border-gray-400 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300 bg-white shadow-sm transition duration-300"
+                    className="peer w-full px-4 py-3 text-base sm:text-lg border-2 border-gray-400 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300 bg-white shadow-sm transition duration-300"
                   />
                   <label
-                    htmlFor="gameName"
-                    className={`absolute left-4 top-3 text-lg px-1 transition-all duration-200 bg-white
-                  ${
-                    gameData.playerOne
-                      ? "top-[-1px] text-sm text-blue-500 "
-                      : "text-gray-500"
-                  }`}
+                    htmlFor="playerOne"
+                    className={`absolute left-4 top-3 text-base sm:text-lg px-1 transition-all duration-200 bg-white
+        ${
+          gameData.playerOne
+            ? "top-[-10px] text-sm text-blue-500 "
+            : "text-gray-500"
+        }`}
                   >
                     Enter Name
                   </label>
                 </div>
 
+                {/* VS Image */}
                 <div
-                  className="relative mt-4 w-[100px] h-[100px] flex items-center justify-center rounded-[3.75rem] shadow-lg bg-cover bg-center"
-                  style={{
-                    backgroundImage: `url(${ftvs.src})`,
-                  }}
+                  className="relative w-16 h-16 sm:w-36 sm:h-18 flex items-center justify-center rounded-full shadow-lg bg-cover bg-center mb-5 sm:mb-0"
+                  style={{ backgroundImage: `url(${ftvs.src})` }}
                 >
                   <Image
                     src={bgvs}
                     alt="VS Icon"
-                    width={120}
-                    height={120}
-                    className="rounded-full shadow-lg z-10 mb-6"
+                    width={100}
+                    height={100}
+                    className="rounded-full mt-0 z-10"
                   />
                 </div>
 
-                <div className="relative w-[500px] mt-5">
-                  <h2 className="absolute bottom-16 mb-2 text-yellow-500 font-semibold text-xl">
+                {/* Second Player Input */}
+                <div className="relative w-full max-w-xs sm:max-w-md">
+                  <h2 className="absolute bottom-16 mb-2 text-yellow-500 font-semibold text-lg sm:text-xl">
                     Second Player
                   </h2>
                   <input
@@ -251,22 +255,23 @@ export default function Dashboard() {
                     required
                     value={gameData.playerTwo}
                     onChange={handleChange}
-                    className="peer w-full px-4 py-3 text-lg border-2 border-gray-400 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300 bg-white shadow-sm transition duration-300"
+                    className="peer w-full px-4 py-3 text-base sm:text-lg border-2 border-gray-400 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300 bg-white shadow-sm transition duration-300"
                   />
                   <label
-                    htmlFor="gameName"
-                    className={`absolute left-4 top-3 text-lg px-1 transition-all duration-200 bg-white
-                      ${
-                        gameData.playerTwo
-                          ? "top-[-1px] text-sm text-blue-500 "
-                          : "text-gray-500"
-                      }`}
+                    htmlFor="playerTwo"
+                    className={`absolute left-4 top-3 text-base sm:text-lg px-1 transition-all duration-200 bg-white
+        ${
+          gameData.playerTwo
+            ? "top-[-10px] text-sm text-blue-500 "
+            : "text-gray-500"
+        }`}
                   >
                     Enter Name
                   </label>
                 </div>
               </div>
             </div>
+
             <div className="mt-10 ">
               <div className="font-bold text-2xl px-6 py-3 text-center rounded-lg ">
                 <span className="text-blue-500 text-2xl px-2 border-2 p-2 border-x-0 border-yellow-500">
@@ -274,7 +279,7 @@ export default function Dashboard() {
                 </span>
               </div>
               <div className="mt-3">
-                <h2 className="px-10 mt-5 text-center font-normal text-2xl text-gray-700">
+                <h2 className="md:px-10 px-5 mt-5 text-center font-normal text-2xl text-gray-700">
                   3 categories for first player and 3 categories for second
                   player , for a total of 6 categories with 36 different
                   questions. Choose the categories carefully to maximize your

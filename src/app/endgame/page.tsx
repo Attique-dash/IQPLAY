@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { auth, db } from "../../firebase/firebaseConfig";
 import {
@@ -15,8 +15,10 @@ import {
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import Image from "next/image";
-import winpla from "../../../public/images/wining.png";
+import Confetti from "react-canvas-confetti";
 import logo from "../../../public/images/logo.png";
+import cup from "../../../public/images/winngprice.png";
+import { FaBars, FaTimes } from "react-icons/fa";
 
 interface GameData {
   gameName: string;
@@ -24,21 +26,21 @@ interface GameData {
   playerTwo: string;
 }
 
+type ConfettiInstance = (opts?: object) => void;
+
 export default function EndGamePage() {
   const [gameData, setGameData] = useState<GameData | null>(null);
-  const [playerScores, setPlayerScores] = useState<{ [key: string]: number }>(
-    {}
-  );
+  const [playerScores, setPlayerScores] = useState<{ [key: string]: number }>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [winner, setWinner] = useState<{ name: string; score: number } | null>(
-    null
-  );
+  const [winner, setWinner] = useState<{ name: string; score: number } | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
   const gameId = searchParams.get("gameId");
+  const confettiRef = useRef<ConfettiInstance | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -51,6 +53,26 @@ export default function EndGamePage() {
 
     return () => unsubscribe();
   }, [router]);
+
+  const fireConfetti = () => {
+    if (!confettiRef.current) return;
+
+    // Fireworks Preset
+    confettiRef.current({
+      particleCount: 150, // Increase particle count for more confetti
+      spread: 160, // Wider spread
+      startVelocity: 60, // Faster start velocity
+      origin: { y: 0.6 }, // Start from slightly above the bottom
+    });
+  };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fireConfetti();
+    }, 1000); // Fire confetti every 1 second
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (!userEmail || !gameId) return;
@@ -113,9 +135,7 @@ export default function EndGamePage() {
     if (!userEmail || !gameId) return;
     try {
       await deleteDoc(doc(db, userEmail, gameId));
-
       await deleteDoc(doc(db, "games", gameId));
-
       await deleteDoc(doc(db, "playerPoints", gameId));
 
       const correctEmail = userEmail.replace(/_/g, ".");
@@ -129,7 +149,7 @@ export default function EndGamePage() {
 
       if (paymentsSnap.empty) {
         console.log(
-          `7. No matching documents found in 'payments' collection for user: "${correctEmail}"`
+          `No matching documents found in 'payments' collection for user: "${correctEmail}"`
         );
         return;
       }
@@ -139,7 +159,6 @@ export default function EndGamePage() {
 
       paymentsSnap.forEach((doc) => {
         const data = doc.data();
-        console.log("8. Found payment document:", data);
         if (
           data.userEmail === correctEmail &&
           typeof data.package === "string"
@@ -151,7 +170,7 @@ export default function EndGamePage() {
 
       if (!docToUpdate || !currentPackageValue) {
         console.log(
-          `9. No valid package data found for user: "${correctEmail}"`
+          `No valid package data found for user: "${correctEmail}"`
         );
         return;
       }
@@ -168,31 +187,11 @@ export default function EndGamePage() {
 
             const updatedPackageValue = `${packageNumber} Games`;
 
-            console.log(
-              "11. Updating package from",
-              currentPackageValue,
-              "to",
-              updatedPackageValue
-            );
-
             await updateDoc(docToUpdate, {
               package: updatedPackageValue,
             });
-
-            console.log(
-              "12. After update - Package Value:",
-              updatedPackageValue
-            );
-          } else {
-            console.log(
-              "13. Package is already at minimum (0 Games). No update performed."
-            );
           }
-        } else {
-          console.error("14. Error: No numeric value found in package.");
         }
-      } else {
-        console.error("15. Error: currentPackageValue is not a valid string.");
       }
 
       router.push("/dashboard");
@@ -202,74 +201,106 @@ export default function EndGamePage() {
     }
   };
 
-  if (loading) return <p className="text-center text-lg">Loading...</p>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-lg font-semibold">Loading...</p>
+      </div>
+    );
+  }
   if (error) return <p className="text-red-500 text-center">{error}</p>;
 
   return (
-<>
-  {/* Header Section */}
-  <header className="w-full h-[5.5rem] flex items-center bg-gray-800 text-white py-4 shadow-lg">
-    <div className="flex-shrink-0 ml-10">
-      <Image src={logo} alt="Logo" width={50} height={50} className="mt-0" />
-    </div>
-    <h1 className="flex-grow text-3xl font-bold text-center">
-      {gameData?.gameName}
-    </h1>
-    <button
-      onClick={handleEndGame}
-      className="ml-auto bg-red-500 font-semibold text-white px-4 py-2 rounded-lg mr-10 w-28"
-    >
-      End Game
-    </button>
-  </header>
-
-  {/* Main Content */}
-  <div className="flex flex-col items-center justify-center bg-gray-100 text-white p-6">
-    {/* Video Container */}
-    <div className="relative w-[900px] h-[500px] flex justify-center items-center">
-      {/* Video */}
-      <video
-        src="/video/winning.mp4"
-        loop
-        muted
-        autoPlay
-        className="w-full h-full object-cover rounded-lg shadow-lg"
-      />
-
-      {/* Winner Image with Name and Points */}
-      {winner && (
-        <div className="absolute top-[-4rem] right-[-13.75rem] flex flex-col items-center">
+    <>
+      {/* Header Section */}
+      <header className="w-full h-[5.5rem] flex items-center bg-gray-800 text-white py-4 shadow-lg relative">
+        <div className="flex-shrink-0 ml-10">
           <Image
-            src={winpla}
-            alt="Winner Player"
-            width={600} 
-            height={450} 
-            className="rounded-lg"
+            src={logo}
+            alt="Logo"
+            width={50}
+            height={50}
+            className="mt-0"
           />
-          <div className="absolute bottom-40 px-4 py-2 rounded-lg text-center">
-            <h2 className="text-3xl font-semibold text-blue-500"> {winner.name} </h2>
-            <p className="text-2xl font-semibold text-white">{winner.score} Points</p>
+        </div>
+        <h1 className="flex-grow text-2xl md:text-3xl font-bold text-center">
+          {gameData?.gameName}
+        </h1>
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="md:hidden ml-4 text-3xl focus:outline-none mr-5"
+        >
+          {menuOpen ? <FaTimes /> : <FaBars />}
+        </button>
+
+        <div
+          className={`fixed top-0 left-0 h-full w-60 sm:w-64 bg-gray-800 text-white transform transition-transform duration-300 ease-in-out ${
+            menuOpen ? "translate-x-0" : "-translate-x-full"
+          } md:hidden z-50`}
+        >
+          <div className="p-4">
+            <div className="flex mb-5">
+              <Image
+                src={logo}
+                alt="Logo"
+                width={50}
+                height={50}
+                className="mt-0"
+              />
+              <p className="sm:text-3xl text-2xl font-semibold ml-5">IQPLAY</p>
+            </div>
+            <button
+              onClick={handleEndGame}
+              className="w-full bg-red-500 font-semibold text-white px-4 py-2 rounded-lg"
+            >
+              End Game
+            </button>
           </div>
         </div>
-      )}
-    </div>
+        <button
+          onClick={handleEndGame}
+          className={`mr-3 bg-red-500 font-semibold text-white px-4 py-2 rounded-lg w-28 hidden md:block`}
+        >
+          End Game
+        </button>
+      </header>
 
-    {/* Players' Scores Below the Video */}
-    <div className="mt-6 text-center bg-white p-5 w-8/12 rounded-lg shadow-lg">
-      <p className="text-3xl text-gray-900 font-semibold">
-        Player One: {gameData?.playerOne} -{" "}
-        <span className="text-yellow-400">
-          {playerScores[gameData?.playerOne!] || 0} Points
-        </span>
-      </p>
-      <p className="text-3xl text-gray-900 font-semibold">
-        Player Two: {gameData?.playerTwo} -{" "}
-        <span className="text-blue-600">
-          {playerScores[gameData?.playerTwo!] || 0} Points
-        </span>
-      </p>
-    </div>
-  </div>
-</>
+      {/* 🎆 Full-Page Confetti Component */}
+      <Confetti
+        onInit={({ confetti }) => {
+          confettiRef.current = confetti; // Assign the `confetti` function to `confettiRef.current`
+        }}
+        className="fixed top-0 left-0 w-full h-full pointer-events-none z-10" // Add z-10 to ensure confetti is above other content
+      />
+
+      {/* 🏆 Main Content */}
+      <div className="flex flex-col items-center justify-center text-white p-6 relative z-0 min-h-screen">
+        {/* Winner Section */}
+        <div className="relative w-full max-w-[900px] bg-white rounded-lg shadow-xl p-6 text-center border-4 border-yellow-400">
+          <Image
+            src={cup}
+            alt="Cup"
+            className="mx-auto w-full lg:w-[850px] lg:h-[500px] h-96 rounded-2xl transition-transform transform hover:scale-110 duration-300 ease-in-out"
+          />
+          {winner && (
+            <div className="mt-4 px-4 py-3 bg-gray-700 rounded-lg border-2 border-yellow-500">
+              <h2 className="text-3xl font-bold text-blue-500">{winner.name}</h2>
+              <p className="text-2xl font-semibold text-white">{winner.score} Points</p>
+            </div>
+          )}
+        </div>
+
+        {/* Players' Scores */}
+        <div className="mt-6 bg-white p-5 w-full max-w-[900px] text-center border-4 border-yellow-400 rounded-lg shadow-lg">
+          <p className="text-2xl text-gray-900 font-semibold">
+            <span className="font-bold"> Player One: </span>{gameData?.playerOne} -
+            <span className="text-yellow-400"> {playerScores[gameData?.playerOne!] || 0} Points</span>
+          </p>
+          <p className="text-2xl text-gray-900 font-semibold mt-2">
+            <span className="font-bold"> Player Two: </span>{gameData?.playerTwo} -
+            <span className="text-blue-600"> {playerScores[gameData?.playerTwo!] || 0} Points</span>
+          </p>
+        </div>
+      </div>    </>
   );
 }

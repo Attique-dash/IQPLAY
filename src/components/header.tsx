@@ -15,7 +15,7 @@ export default function Header() {
     lastName: string;
   }
 
-  const [isClick, setIsClick] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userName, setUserName] = useState<UserName | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -31,11 +31,7 @@ export default function Header() {
             console.error("No user data found!");
           }
         } catch (error) {
-          if (error instanceof Error) {
-            console.error("Error fetching user data:", error.message);
-          } else {
-            console.error("An unknown error occurred:", error);
-          }
+          console.error("Error fetching user data:", error);
         }
       } else {
         setUserName(null);
@@ -46,13 +42,8 @@ export default function Header() {
     return () => unsubscribe();
   }, []);
 
-  const goToHome = () => {
-    router.push("/");
-  };
-
-
-  const toggle = () => {
-    setIsClick(!isClick);
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
   };
 
   const handleLogout = async () => {
@@ -61,11 +52,7 @@ export default function Header() {
       setUserName(null);
       router.push("/login");
     } catch (error) {
-      if (error instanceof Error) {
-        console.error("Error logging out:", error.message);
-      } else {
-        console.error("An unknown error occurred:", error);
-      }
+      console.error("Error logging out:", error);
     }
   };
 
@@ -86,37 +73,38 @@ export default function Header() {
   }
 
   return (
-    <nav className="bg-white border-gray-200 dark:bg-gray-800">
-      <div className="max-w-screen-xl flex items-center justify-between mx-auto p-2">
-        <a className="flex items-center space-x-3 rtl:space-x-reverse cursor-pointer">
-          <Image src={logo} onClick={goToHome} className="h-10 w-[50px] mb-[15px]" alt="Logo" />
-        </a>
-        <span className="self-center text-2xl ml-3 font-semibold whitespace-nowrap dark:text-white">
-          IQPLAY
-        </span>
+    <nav className="bg-white border-gray-200 dark:bg-gray-800 w-full">
+      <div className="max-w-screen-xl h-[5.5rem] flex items-center justify-between mx-auto p-2 relative">
+        {/* Logo Section */}
+        <div className="flex items-center">
+          <Image
+            src={logo}
+            onClick={() => router.push("/")}
+            className="h-10 w-[50px] mt-0 cursor-pointer"
+            alt="Logo"
+          />
+          <div className="absolute left-1/2 md:left-[125px] transform -translate-x-1/2">
+            <span className="text-2xl font-semibold dark:text-white">
+              IQPLAY
+            </span>
+          </div>{" "}
+        </div>
 
-        <div className="flex-grow flex justify-center">
+        {/* Desktop Menu */}
+        <div className="hidden md:flex flex-grow justify-center md:font-semibold">
           <ul className="flex flex-row space-x-8">
             <li>
               <a
                 onClick={() => handleNavigation("/dashboard", true)}
-                className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white cursor-pointer"
+                className="cursor-pointer text-gray-900 dark:text-white hover:text-blue-700 dark:hover:text-gray-400"
               >
-                My playtime
+                My Playtime
               </a>
-            </li>
-            <li>
-              <a
-                onClick={() => handleNavigation("/about")}
-                className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white cursor-pointer"
-              >
-                How can I start?
-              </a>
-            </li>
+            </li>{" "}
             <li>
               <a
                 onClick={() => handleNavigation("/contact")}
-                className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white cursor-pointer"
+                className="cursor-pointer text-gray-900 dark:text-white hover:text-blue-700 dark:hover:text-gray-400"
               >
                 Contact Support
               </a>
@@ -124,19 +112,21 @@ export default function Header() {
           </ul>
         </div>
 
+        {/* User Profile / Login Button */}
         {userName ? (
-          <div className="relative">
+          <div className="relative hidden md:flex">
             <button
               className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600"
-              onClick={toggle}
+              onClick={toggleMenu}
             >
               <span>
                 {userName.firstName} {userName.lastName}
               </span>
-              {isClick ? <RxCross2 /> : <FaBars />}
+              {isMenuOpen ? <RxCross2 /> : <FaBars />}
             </button>
-            {isClick && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg">
+
+            {isMenuOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-50">
                 <ul>
                   <li>
                     <a
@@ -159,16 +149,83 @@ export default function Header() {
             )}
           </div>
         ) : (
-          <div className="flex md:order-2 space-x-3">
+          <div className="hidden md:block">
             <button
-              type="button"
               onClick={() => router.push("/login")}
-              className="text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-semibold rounded-lg px-5 py-2.5"
+              className="text-white bg-gradient-to-r from-blue-500 to-blue-700 px-5 py-2.5 rounded-lg font-semibold hover:bg-blue-600"
             >
               Login
             </button>
           </div>
         )}
+
+        {/* Mobile Menu Button */}
+        <div className="md:hidden">
+          <button
+            onClick={toggleMenu}
+            className="text-gray-900 dark:text-white text-2xl"
+          >
+            {isMenuOpen ? <RxCross2 /> : <FaBars />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Menu */}
+      <div
+        className={`md:hidden fixed top-0 left-0 h-full w-64 bg-gray-800 text-white z-50 transform ${
+          isMenuOpen ? "translate-x-0" : "-translate-x-full"
+        } transition-transform duration-300 shadow-lg`}
+      >
+        <button
+          className="absolute top-4 right-4 text-white text-2xl"
+          onClick={toggleMenu}
+        >
+          <RxCross2 />
+        </button>
+
+        <div className="flex flex-col items-start p-5 space-y-4">
+          <Image
+            src={logo}
+            onClick={() => router.push("/")}
+            className="h-12 w-[60px] mb-4 mt-0"
+            alt="Logo"
+          />
+          <a
+            onClick={() => handleNavigation("/dashboard", true)}
+            className="cursor-pointer text-lg hover:text-blue-400"
+          >
+            My Playtime
+          </a>
+          <a
+            onClick={() => handleNavigation("/contact")}
+            className="cursor-pointer text-lg hover:text-blue-400"
+          >
+            Contact Support
+          </a>
+          {userName ? (
+            <>
+              <a
+                href="/profile"
+                className="text-lg bg-blue-500 p-2 text-white rounded-lg w-40"
+              >
+                Profile
+              </a>
+              <button
+                onClick={handleLogout}
+                className="text-lg hover:text-red-400"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => router.push("/login")}
+              className="text-lg bg-blue-500 p-2 text-white rounded-lg w-40 "
+            >
+              Login
+            </button>
+          )}
+        </div>
       </div>
     </nav>
   );
