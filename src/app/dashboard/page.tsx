@@ -35,11 +35,12 @@ import BrowserGame from "../browsergame/page";
 
 export default function Dashboard() {
   const router = useRouter();
+
   const [selectedCards, setSelectedCards] = useState<
     { title: string; image: any }[]
   >([]);
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [broGame, setBroGame] = useState(false);
+  const [showBroGame, setShowBroGame] = useState(false);
   const [gameData, setGameData] = useState({
     gameName: "",
     playerOne: "",
@@ -55,6 +56,11 @@ export default function Dashboard() {
       }
     });
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setShowBroGame(params.get('showBroGame') === 'true');
   }, []);
 
   const cards = [
@@ -159,8 +165,10 @@ export default function Dashboard() {
         className="text-center font-semibold"
       />
       <div>
-        {!broGame ? (
-          <BrowserGame setBroGame={setBroGame} />
+        {!showBroGame ? (
+          <div className="container mx-auto p-4 mt-5">
+            <BrowserGame />
+          </div>
         ) : (
           <>
             <div className="mt-10 flex flex-col items-center px-4 sm:px-6 lg:px-8">

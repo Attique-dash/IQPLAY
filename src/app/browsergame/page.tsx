@@ -1,24 +1,26 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from 'next/navigation';
 import { auth, db } from "../../firebase/firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
 import { FaSearch } from "react-icons/fa";
 import Image from "next/image";
 
-interface BrowserGameProps {
-  setBroGame?: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-export default function BrowserGame({ setBroGame }: BrowserGameProps) {
+export default function BrowserGame() {
   const [games, setGames] = useState<any[]>([]);
+  const [showBroGame, setShowBroGame] = useState(false);
   const [filteredGames, setFilteredGames] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [totalGames, setTotalGames] = useState<number>(0);
   const router = useRouter();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setShowBroGame(params.get('showBroGame') === 'true');
+  }, []);
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -93,6 +95,14 @@ export default function BrowserGame({ setBroGame }: BrowserGameProps) {
     }
   };
 
+  const handleCreateGame = () => {
+    // Update URL without page reload
+    const params = new URLSearchParams(window.location.search);
+    params.set('showBroGame', 'true');
+    window.history.pushState({}, '', `?${params.toString()}`);
+    setShowBroGame(true);
+  };
+
   const handleBuyGame = () => {
     router.push("/?showCards=true");
   };
@@ -131,7 +141,7 @@ export default function BrowserGame({ setBroGame }: BrowserGameProps) {
       {/* Search Bar & Total Games Counter */}
       <div className="mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="absolute ml-[6px] hidden md:block">
-      <FaSearch className="text-lg text-blue-500" />
+          <FaSearch className="text-lg text-blue-500" />
         </div>
         <input
           type="text"
@@ -200,7 +210,7 @@ export default function BrowserGame({ setBroGame }: BrowserGameProps) {
       {/* Buttons Section */}
       <div className="flex flex-col sm:flex-row gap-4 p-6 justify-center items-center">
         <button
-          onClick={() => setBroGame?.(true)}
+          onClick={handleCreateGame}
           className="w-full sm:w-auto px-6 py-3 text-white font-semibold text-lg rounded-2xl shadow-lg bg-gradient-to-r from-gray-500 to-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
         >
           Create a new game

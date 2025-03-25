@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { auth, db } from "../../firebase/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
@@ -24,6 +24,7 @@ export default function UserGame() {
   const [error, setError] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [gameId, setGameId] = useState<string | null>(null);
   const [selectedPoints, setSelectedPoints] = useState<{
     [key: number]: number | null;
   }>({});
@@ -32,11 +33,15 @@ export default function UserGame() {
   }>({}); // State to hold player scores
 
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const gameId = searchParams.get("gameId");
   const pointsList = [100, 250, 450, 600];
-
+  
   useEffect(() => {
+    // Get gameId from URL on client side
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      setGameId(params.get("gameId"));
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user || !user.email) {
         router.push("/login");
@@ -109,8 +114,11 @@ export default function UserGame() {
   };
 
   const handlePlay = (title: string, point: number) => {
-    router.push(`/question?title=${title}&difficulty=${point}&gameId=${gameId}&playerOne=${gameData?.playerOne}&playerTwo=${gameData?.playerTwo}`);
-};
+    if (!gameData) return;
+    router.push(
+      `/question?title=${title}&difficulty=${point}&gameId=${gameId}&playerOne=${gameData.playerOne}&playerTwo=${gameData.playerTwo}`
+    );
+  };
 
 const ExitGame = () => {
     router.push("/dashboard");

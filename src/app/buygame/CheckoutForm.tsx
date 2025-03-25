@@ -1,5 +1,4 @@
 "use client";
-import { useSearchParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useStripe, useElements } from "@stripe/react-stripe-js";
@@ -11,16 +10,24 @@ import {
 import { auth } from "../../firebase/firebaseConfig"; 
 
 const CheckoutForm = () => {
-  const searchParams = useSearchParams();
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [country, setCountry] = useState("");
+  const [pac, setPac] = useState("");
+  const [rs, setRs] = useState("");
 
   const userId = userEmail;
-  const pac = searchParams.get("pac") || "";
-  const rs = searchParams.get("rs") || "";
+  
+  useEffect(() => {
+    // Client-side URL parsing
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      setPac(params.get("pac") || "");
+      setRs(params.get("rs") || "");
+    }
+  }, []);
 
   const stripe = useStripe();
   const elements = useElements();

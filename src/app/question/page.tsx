@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { db } from "../../firebase/firebaseConfig";
 import { doc, setDoc, getDoc, updateDoc, increment } from "firebase/firestore";
 import Image from "next/image";
@@ -25,15 +25,16 @@ interface PlayerResponse {
 }
 
 export default function Quiz() {
-  const searchParams = useSearchParams();
-  const title = searchParams.get("title") || "Game";
-  const difficulty = searchParams.get("difficulty");
-  const gameId = searchParams.get("gameId");
-  const playerOne = searchParams.get("playerOne") || "Player 1";
-  const playerTwo = searchParams.get("playerTwo") || "Player 2";
   const router = useRouter();
-
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // State to manage sidebar visibility
+  
+  const [urlParams, setUrlParams] = useState({
+    title: "Game",
+    difficulty: "",
+    gameId: "",
+    playerOne: "Player 1",
+    playerTwo: "Player 2"
+  });
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [allQuestions, setAllQuestions] = useState<Question[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -42,14 +43,33 @@ export default function Quiz() {
   const [timer, setTimer] = useState(15);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [showPopup, setShowPopup] = useState(true);
-  const [currentPlayer, setCurrentPlayer] = useState(playerOne);
+  // Initialize currentPlayer with the default value first
+  const [currentPlayer, setCurrentPlayer] = useState("Player 1");
   const [playerResponses, setPlayerResponses] = useState<PlayerResponse[]>([]);
   const [playerScores, setPlayerScores] = useState({
     playerOne: 0,
     playerTwo: 0,
   });
-  const [usedQuestions, setUsedQuestions] = useState<Set<string>>(new Set()); // Track used questions
-  const [isTimeUp, setIsTimeUp] = useState(false); // Track if time is up
+  const [usedQuestions, setUsedQuestions] = useState<Set<string>>(new Set());
+  const [isTimeUp, setIsTimeUp] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const newParams = {
+        title: params.get("title") || "Game",
+        difficulty: params.get("difficulty") || "",
+        gameId: params.get("gameId") || "",
+        playerOne: params.get("playerOne") || "Player 1",
+        playerTwo: params.get("playerTwo") || "Player 2"
+      };
+      setUrlParams(newParams);
+      // Update currentPlayer after urlParams is set
+      setCurrentPlayer(newParams.playerOne);
+    }
+  }, []);
+
+  const { title, difficulty, gameId, playerOne, playerTwo } = urlParams;
 
   useEffect(() => {
     fetch("/questions.json")

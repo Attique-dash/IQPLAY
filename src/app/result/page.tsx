@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { db } from "../../firebase/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
@@ -10,8 +10,6 @@ import vs from "../../../public/images/bgvs.png";
 import { FaBars, FaTimes } from "react-icons/fa";
 
 export default function Result() {
-  const searchParams = useSearchParams();
-  const gameId = searchParams.get("gameId");
   const router = useRouter();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // State to manage sidebar visibility
@@ -20,7 +18,19 @@ export default function Result() {
   const [playerOneCorrect, setPlayerOneCorrect] = useState(0);
   const [playerTwoCorrect, setPlayerTwoCorrect] = useState(0);
   const [winner, setWinner] = useState<string>("");
+  const [gameId, setGameId] = useState<string | null>(null);
 
+
+  useEffect(() => {
+    // Get gameId from URL using URLSearchParams
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("gameId");
+      setGameId(id);
+    }
+  }, []);
+
+  
   useEffect(() => {
     if (!gameId) return;
 

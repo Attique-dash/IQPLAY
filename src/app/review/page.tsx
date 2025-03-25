@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { db } from "../../firebase/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
@@ -9,16 +9,24 @@ import logo from "../../../public/images/logo.png";
 import { FaBars, FaTimes } from "react-icons/fa";
 
 export default function Review() {
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const gameId = searchParams.get("gameId");
-
+  
   const [menuOpen, setMenuOpen] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const [responses, setResponses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
-
+  const [gameId, setGameId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    // Get gameId from URL using URLSearchParams
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("gameId");
+      setGameId(id);
+    }
+  }, []);
+  
   useEffect(() => {
     if (!gameId) return;
 

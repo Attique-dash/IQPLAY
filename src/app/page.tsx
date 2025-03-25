@@ -3,7 +3,7 @@ import Image from "next/image";
 import React, { useState, useEffect } from "react";
 import { auth } from "../firebase/firebaseConfig";
 import Header from "@/components/header";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { MdBrowseGallery } from "react-icons/md";
 import { IoGameController } from "react-icons/io5";
 import player from "../../public/images/player.png";
@@ -19,11 +19,18 @@ import sno from "../../public/images/snoo.jpg";
 export default function Home() {
   const [userId, setUserId] = useState<string | null>(null);
   const [currentImage, setCurrentImage] = useState(0);
+  const [showCardsOnly, setShowCardsOnly] = useState(false);
   const images = [spo.src, app.src, bor.src, sno.src];
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const showCardsOnly = searchParams.get("showCards") === "true";
   const router = useRouter();
+
+  useEffect(() => {
+    // Get showCards parameter from URL using URLSearchParams
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      setShowCardsOnly(params.get("showCards") === "true");
+    }
+  }, []);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {

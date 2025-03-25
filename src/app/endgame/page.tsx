@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { auth, db } from "../../firebase/firebaseConfig";
 import {
   doc,
@@ -36,13 +36,18 @@ export default function EndGamePage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [winner, setWinner] = useState<{ name: string; score: number } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [gameId, setGameId] = useState<string | null>(null);
 
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const gameId = searchParams.get("gameId");
   const confettiRef = useRef<ConfettiInstance | null>(null);
-
+  
   useEffect(() => {
+    // Get gameId from URL on client side
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      setGameId(params.get("gameId"));
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user || !user.email) {
         router.push("/login");
