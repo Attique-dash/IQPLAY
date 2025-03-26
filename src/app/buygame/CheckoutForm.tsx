@@ -90,37 +90,37 @@ const CheckoutForm = () => {
 
     const token = await user.getIdToken(); 
 
-    const response = await fetch("/api/payment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        paymentMethodId: paymentMethod.id,
-        amount: amountInCents,
-        userEmail, 
-        pac,
-        rs,
-      }),
-    });
+// In your handleSubmit function, update the response handling:
+const response = await fetch("/api/payment", {
+  method: "POST",
+  headers: { 
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${token}` // Add auth token if needed
+  },
+  body: JSON.stringify({
+    paymentMethodId: paymentMethod.id,
+    amount: amountInCents,
+    userEmail, 
+    pac,
+    rs,
+  }),
+});
 
-    console.log("Response status:", response.status);
+const data = await response.json();
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Payment failed:", errorText);
-      setError(`Payment failed: ${response.status} ${response.statusText}`);
-      setLoading(false);
-      return;
-    }
+if (!response.ok) {
+  console.error("Payment failed:", data);
+  setError(data.message || "Payment failed");
+  setLoading(false);
+  return;
+}
 
-    const data = await response.json();
-
-    if (data.success) {
-      setSuccess(true);
-      router.push("/dashboard");
-    } else {
-      setError(data.message);
-    }
-    setLoading(false);
+if (data.paymentIntent.status === "succeeded") {
+  setSuccess(true);
+  router.push("/dashboard");
+} else {
+  setError("Payment processing - please check your email for confirmation");
+}    setLoading(false);
   };
 
   return (

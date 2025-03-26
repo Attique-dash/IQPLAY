@@ -4,20 +4,14 @@ import { db } from "../../../firebase/firebaseConfig";
 import { collection, addDoc } from "firebase/firestore";
 
 // Initialize Stripe with proper error handling
-let stripe: Stripe;
-
-try {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error("STRIPE_SECRET_KEY is not defined");
-  }
-
-  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2025-02-24.acacia", // Must exactly match your installed Stripe types version
-  });
-} catch (err) {
-  console.error("Stripe initialization failed:", err);
-  throw new Error("Payment system configuration error");
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+if (!stripeSecretKey) {
+  throw new Error("STRIPE_SECRET_KEY is not defined in environment variables");
 }
+
+const stripe = new Stripe(stripeSecretKey, {
+  apiVersion: "2025-02-24.acacia" // Match exactly with your installed Stripe types
+});
 
 export async function POST(req: NextRequest) {
   try {
@@ -53,15 +47,24 @@ export async function POST(req: NextRequest) {
       amount: rs,
       paymentIntentId: paymentIntent.id,
       createdAt: new Date(),
+      status: paymentIntent.status,
     });
 
-    return NextResponse.json({ success: true, paymentIntent });
-  } catch (error: any) {  // Note the explicit error type
+    return NextResponse.json({ 
+      success: true, 
+      paymentIntent,
+      clientSecret: paymentIntent.client_secret 
+    });
+  } catch (error: any) {
     console.error("Payment API Error:", error);
     const errorMessage = error.raw?.message || error.message || "Payment failed";
     return NextResponse.json(
-      { success: false, message: errorMessage },
-      { status: 500 }
+      { 
+        success: false, 
+        message: errorMessage,
+        errorDetails: error.type || undefined 
+      },
+      { status: error.statusCode || 500 }
     );
   }
 }
