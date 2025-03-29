@@ -8,6 +8,7 @@ import { RxCross2 } from "react-icons/rx";
 import { auth, db } from "../firebase/firebaseConfig";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import { toast, ToastContainer } from "react-toastify";
 
 export default function Header() {
   interface UserName {
@@ -50,6 +51,7 @@ export default function Header() {
     try {
       await signOut(auth);
       setUserName(null);
+            toast.success("Logout Successfully");
       router.push("/login");
     } catch (error) {
       console.error("Error logging out:", error);
@@ -73,6 +75,12 @@ export default function Header() {
   }
 
   return (
+    <>
+                <ToastContainer
+                  position="top-center"
+                  className="text-center font-semibold"
+                />
+    
     <nav className="bg-white border-gray-200 dark:bg-gray-800 w-full">
       <div className="max-w-screen-xl h-[5.5rem] flex items-center justify-between mx-auto p-2 relative">
         {/* Logo Section */}
@@ -126,12 +134,12 @@ export default function Header() {
             </button>
 
             {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-50">
+              <div className="absolute right-0 mt-9 w-48 bg-white hover:rounded-lg rounded-lg shadow-lg z-50">
                 <ul>
                   <li>
                     <a
                       href="/profile"
-                      className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+                      className="block px-4 py-2 text-gray-700 hover:text-green-500 font-semibold hover:bg-gray-100"
                     >
                       Profile
                     </a>
@@ -139,7 +147,7 @@ export default function Header() {
                   <li>
                     <button
                       onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+                      className="block w-full text-left px-4 py-2 hover:text-red-500 font-semibold text-gray-700 hover:bg-gray-100"
                     >
                       Logout
                     </button>
@@ -206,13 +214,13 @@ export default function Header() {
             <>
               <a
                 href="/profile"
-                className="text-lg bg-blue-500 p-2 text-white rounded-lg w-40"
+                className="text-lg bg-blue-500 p-2 text-white rounded-lg w-44 text-center"
               >
                 Profile
               </a>
               <button
                 onClick={handleLogout}
-                className="text-lg hover:text-red-400"
+                className="text-lg bg-red-500 w-44 p-2 rounded-lg hover:text-red-400 text-center"
               >
                 Logout
               </button>
@@ -228,5 +236,6 @@ export default function Header() {
         </div>
       </div>
     </nav>
+    </>
   );
 }

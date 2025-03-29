@@ -7,9 +7,12 @@ import { collection, getDocs } from "firebase/firestore";
 import { FaSearch } from "react-icons/fa";
 import Image from "next/image";
 
-export default function BrowserGame() {
+interface BrowserGameProps {
+  onShowDashboard: () => void;
+}
+
+export default function BrowserGame({ onShowDashboard }: BrowserGameProps) {
   const [games, setGames] = useState<any[]>([]);
-  const [showBroGame, setShowBroGame] = useState(false);
   const [filteredGames, setFilteredGames] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -17,10 +20,6 @@ export default function BrowserGame() {
   const [totalGames, setTotalGames] = useState<number>(0);
   const router = useRouter();
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setShowBroGame(params.get('showBroGame') === 'true');
-  }, []);
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -96,11 +95,7 @@ export default function BrowserGame() {
   };
 
   const handleCreateGame = () => {
-    // Update URL without page reload
-    const params = new URLSearchParams(window.location.search);
-    params.set('showBroGame', 'true');
-    window.history.pushState({}, '', `?${params.toString()}`);
-    setShowBroGame(true);
+    onShowDashboard(); // Call parent's function to show dashboard
   };
 
   const handleBuyGame = () => {

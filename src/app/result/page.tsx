@@ -113,7 +113,7 @@ export default function Result() {
             {isSidebarOpen ? <FaTimes /> : <FaBars />}{" "}
           </button>
           <div
-            className={`fixed top-0 left-0 h-full w-60 sm:w-64 bg-gray-800 text-white transform transition-transform duration-300 ease-in-out ${
+            className={`fixed top-0 left-0 h-full w-60 bg-gray-800 text-white transform transition-transform duration-300 ease-in-out ${
               isSidebarOpen ? "translate-x-0" : "-translate-x-full"
             } md:hidden z-50`}
           >
@@ -127,6 +127,13 @@ export default function Result() {
                   className="mt-0"
                 />
                 <p className="sm:text-3xl text-2xl font-semibold ml-5">IQPLAY</p>
+                <button
+            onClick={toggleSidebar}
+            className=" ml-4 text-3xl focus:outline-none mr-5"
+          >
+            {isSidebarOpen ? <FaTimes /> : null}{" "}
+          </button>
+
               </div>
 
               <button

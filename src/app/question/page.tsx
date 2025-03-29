@@ -26,13 +26,13 @@ interface PlayerResponse {
 
 export default function Quiz() {
   const router = useRouter();
-  
+
   const [urlParams, setUrlParams] = useState({
     title: "Game",
     difficulty: "",
     gameId: "",
     playerOne: "Player 1",
-    playerTwo: "Player 2"
+    playerTwo: "Player 2",
   });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [allQuestions, setAllQuestions] = useState<Question[]>([]);
@@ -54,14 +54,14 @@ export default function Quiz() {
   const [isTimeUp, setIsTimeUp] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const newParams = {
         title: params.get("title") || "Game",
         difficulty: params.get("difficulty") || "",
         gameId: params.get("gameId") || "",
         playerOne: params.get("playerOne") || "Player 1",
-        playerTwo: params.get("playerTwo") || "Player 2"
+        playerTwo: params.get("playerTwo") || "Player 2",
       };
       setUrlParams(newParams);
       // Update currentPlayer after urlParams is set
@@ -140,45 +140,58 @@ export default function Quiz() {
   };
 
   const switchPlayer = () => {
+    // Store all used questions so far
+    const newUsedQuestions = new Set(usedQuestions);
+    questions.forEach((q) => newUsedQuestions.add(q.question));
+    setUsedQuestions(newUsedQuestions);
+
+    // Get remaining questions (not used by either player)
+    const remainingQuestions = allQuestions.filter(
+      (q) => !newUsedQuestions.has(q.question)
+    );
+
+    // Shuffle and take first 5
+    const shuffledQuestions = [...remainingQuestions].sort(
+      () => Math.random() - 0.5
+    );
+    const newQuestions = shuffledQuestions.slice(0, 5);
+
+    if (newQuestions.length === 0) {
+      toast.error("No more questions available");
+      return;
+    }
+
+    setQuestions(newQuestions);
     setShowPopup(true);
     setCurrentPlayer(playerTwo);
     setCurrentIndex(0);
-
-    // Filter out used questions and set new questions for the next player
-    const remainingQuestions = allQuestions.filter(
-      (q) => !usedQuestions.has(q.question)
-    );
-    setQuestions(remainingQuestions.slice(0, 5));
-
-    // Update used questions
-    setUsedQuestions((prev) => {
-      const newSet = new Set(prev);
-      questions.forEach((q) => newSet.add(q.question));
-      return newSet;
-    });
+    setSelectedOption(null);
+    setTimer(15);
+    setIsTimeUp(false);
   };
 
   const handleNext = () => {
     if (timer > 0 && selectedOption === null) {
-      toast.error("Please select an option before proceeding.");
+      toast.error("Please select an option before time up.");
       return;
     }
 
-    storeResponse(); // Store the current question's response
+    storeResponse();
 
     if (currentIndex === 4) {
       if (currentPlayer === playerOne) {
-        switchPlayer(); // Switch to player two
+        switchPlayer();
       } else {
-        handleComplete(); // Handle completion after storing the last response
+        // For last question of player two
+        toast.success("Quiz completed! Calculating results...");
+        setTimeout(handleComplete, 2000); // Show toast for 2 seconds before completing
       }
-      return;
+    } else {
+      setCurrentIndex((prev) => prev + 1);
+      setSelectedOption(null);
+      setTimer(15);
+      setIsTimeUp(false);
     }
-
-    setCurrentIndex((prev) => prev + 1);
-    setSelectedOption(null);
-    setTimer(15);
-    setIsTimeUp(false); // Reset time-up state
   };
 
   const handleComplete = async () => {
@@ -270,14 +283,14 @@ export default function Quiz() {
       </div>
     );
   }
-    if (!questions.length && !showPopup) {
-      return (
-        <div className="flex items-center justify-center min-h-screen">
-          <p className="text-lg font-semibold">No questions available.</p>
-        </div>
-      );
-  
-    }
+  if (!questions.length && !showPopup) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-lg font-semibold">No questions available.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-100">
       <ToastContainer
@@ -307,7 +320,7 @@ export default function Quiz() {
           </button>
 
           <div
-            className={`fixed top-0 left-0 h-full w-60 sm:w-64 bg-gray-800 text-white transform transition-transform duration-300 ease-in-out ${
+            className={`fixed top-0 left-0 h-full w-60 bg-gray-800 text-white transform transition-transform duration-300 ease-in-out ${
               isSidebarOpen ? "translate-x-0" : "-translate-x-full"
             } md:hidden z-50`}
           >
@@ -320,9 +333,16 @@ export default function Quiz() {
                   height={50}
                   className="mt-0"
                 />
-                <p className="sm:text-3xl text-2xl font-semibold ml-5">IQPLAY</p>
+                <p className="sm:text-3xl text-2xl font-semibold ml-5">
+                  IQPLAY
+                </p>
+                <button
+            onClick={toggleSidebar}
+            className=" ml-4 text-3xl focus:outline-none mr-5"
+          >
+            {isSidebarOpen ? <FaTimes /> : null}{" "}
+          </button>
               </div>
-
               <button
                 onClick={() => router.push(`/creategame?gameId=${gameId}`)}
                 className="w-full bg-red-500 font-semibold text-white px-4 py-2 rounded-lg"
@@ -390,21 +410,12 @@ export default function Quiz() {
               </div>
             </div>
 
-            {currentPlayer === playerTwo && currentIndex === 4 ? (
-              <button
-                onClick={handleComplete}
-                className="mt-6 w-3/4 bg-green-500 text-white py-3 rounded-lg text-xl"
-              >
-                Complete
-              </button>
-            ) : (
-              <button
-                onClick={handleNext}
-                className="mt-6 w-3/4 bg-blue-500 text-white py-3 rounded-lg text-xl"
-              >
-                Next
-              </button>
-            )}
+            <button
+              onClick={handleNext}
+              className="mt-6 w-3/4 bg-blue-500 text-white py-3 rounded-lg text-xl"
+            >
+              {currentIndex === 4 ? "Finish" : "Next"}
+            </button>
           </div>
         )}
       </div>

@@ -5,7 +5,17 @@ import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { auth, db } from "../../firebase/firebaseConfig";
-import { collection, addDoc, Timestamp, getDocs } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  Timestamp,
+  query,
+  where,
+  getDocs,
+  updateDoc,
+  DocumentReference,
+  deleteDoc
+} from "firebase/firestore";
 import Header from "@/components/header";
 import Image from "next/image";
 import bgvs from "../../../public/images/bgvs.png";
@@ -40,7 +50,8 @@ export default function Dashboard() {
     { title: string; image: any }[]
   >([]);
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [showBroGame, setShowBroGame] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showBroGame, setShowBroGame] = useState(true);
   const [gameData, setGameData] = useState({
     gameName: "",
     playerOne: "",
@@ -58,10 +69,9 @@ export default function Dashboard() {
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setShowBroGame(params.get('showBroGame') === 'true');
-  }, []);
+  const handleShowDashboard = () => {
+    setShowBroGame(false); // This will show the dashboard content
+  };
 
   const cards = [
     { image: circ, title: "Cricket" },
@@ -105,52 +115,136 @@ export default function Dashboard() {
   };
 
   const handleSubmit = async () => {
-    if (
-      !gameData.gameName ||
-      !gameData.playerOne ||
-      !gameData.playerTwo ||
-      selectedCards.length !== 6
-    ) {
-      toast.error("Please enter game and player names.");
+    // Clear previous errors
+    setError(null);
+  
+    // Validate all fields with specific error messages
+    if (!gameData.gameName.trim()) {
+      toast.error("Please enter your game name");
       return;
     }
-
+  
+    if (!gameData.playerOne.trim()) {
+      toast.error("Please enter first player name");
+      return;
+    }
+  
+    if (!gameData.playerTwo.trim()) {
+      toast.error("Please enter second player name");
+      return;
+    }
+  
+    if (selectedCards.length !== 6) {
+      toast.error(`Please select exactly 6 categories (${selectedCards.length} selected)`);
+      return;
+    }
+  
+    // Check if userEmail exists
     if (!userEmail) {
-      toast.error("User email is not available.");
+      toast.error("User authentication error. Please login again.");
       return;
     }
-
+  
+    // Proceed with game creation if all validations pass
     try {
       const sanitizedEmail = userEmail.replace(/\./g, "_");
       const userGameCollection = collection(db, sanitizedEmail);
-      console.log("Fetching collection for user:", sanitizedEmail);
-
+      
+      // Check for existing game with same name
       const querySnapshot = await getDocs(userGameCollection);
-      console.log(
-        "Fetched Docs:",
-        querySnapshot.docs.map((doc) => doc.data())
-      );
-
       const existingGame = querySnapshot.docs.some(
-        (doc) =>
-          doc.data().gameName.toLowerCase() === gameData.gameName.toLowerCase()
+        (doc) => doc.data().gameName.toLowerCase() === gameData.gameName.toLowerCase()
       );
-
+  
       if (existingGame) {
-        toast.error(
-          "Your game name already exists. Please choose a different name."
-        );
+        toast.error("Game name already exists. Please choose a different name.");
         return;
       }
-
+  
+      // Check payment status for ALL game creations
+      const correctEmail = userEmail.replace(/_/g, ".");
+      const paymentsRef = collection(db, "payments");
+      const paymentsQuery = query(
+        paymentsRef,
+        where("userEmail", "==", correctEmail)
+      );
+      const paymentsSnap = await getDocs(paymentsQuery);
+  
+      let hasValidPackage = false;
+      let docToUpdate: DocumentReference | null = null;
+      let currentPackageValue: string | null = null;
+      let docsToDelete: DocumentReference[] = [];
+  
+      if (!paymentsSnap.empty) {
+        // First pass: Find all invalid packages (0 games) to delete
+        for (const doc of paymentsSnap.docs) {
+          const data = doc.data();
+          if (data.userEmail === correctEmail && typeof data.package === "string") {
+            const numberMatch = data.package.match(/\d+/);
+            if (numberMatch) {
+              const packageNumber = parseInt(numberMatch[0], 10);
+              if (packageNumber === 0) {
+                docsToDelete.push(doc.ref);
+              }
+            }
+          }
+        }
+  
+        // Delete all invalid packages first
+        if (docsToDelete.length > 0) {
+          await Promise.all(docsToDelete.map(doc => deleteDoc(doc)));
+        }
+  
+        // Second pass: Check remaining valid packages
+        const updatedPaymentsSnap = await getDocs(paymentsQuery);
+        for (const doc of updatedPaymentsSnap.docs) {
+          const data = doc.data();
+          if (data.userEmail === correctEmail && typeof data.package === "string") {
+            const numberMatch = data.package.match(/\d+/);
+            if (numberMatch) {
+              const packageNumber = parseInt(numberMatch[0], 10);
+              if (packageNumber > 0) {
+                docToUpdate = doc.ref;
+                currentPackageValue = data.package;
+                hasValidPackage = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+  
+      // Only allow game creation if valid package exists
+      if (!hasValidPackage) {
+        toast.error("Please buy a game package to continue creating");
+        router.push("/?showCards=true");
+        return;
+      }
+  
+      // Create the game document (only reaches here if hasValidPackage)
       const docRef = await addDoc(userGameCollection, {
         ...gameData,
         selectedCards,
         createdAt: Timestamp.now(),
       });
-
-      toast.success(" Your Game create successfully!");
+  
+      // Update package count (we know hasValidPackage is true here)
+      if (docToUpdate && currentPackageValue) {
+        const numberMatch = currentPackageValue.match(/\d+/);
+        if (numberMatch) {
+          let packageNumber = parseInt(numberMatch[0], 10);
+          packageNumber--;
+          const updatedPackageValue = `${packageNumber} Games`;
+  
+          await updateDoc(docToUpdate, {
+            package: updatedPackageValue,
+          });
+        }
+      }
+  
+      toast.success("Game created successfully!");
       router.push(`/creategame?gameId=${docRef.id}`);
+  
     } catch (error) {
       console.error("Error saving game info:", error);
       toast.error("Something went wrong. Please try again.");
@@ -165,9 +259,9 @@ export default function Dashboard() {
         className="text-center font-semibold"
       />
       <div>
-        {!showBroGame ? (
+        {showBroGame ? (
           <div className="container mx-auto p-4 mt-5">
-            <BrowserGame />
+            <BrowserGame onShowDashboard={handleShowDashboard} />
           </div>
         ) : (
           <>
@@ -339,12 +433,7 @@ export default function Dashboard() {
               <div className="mt-[3.25rem] text-center">
                 <button
                   onClick={handleSubmit}
-                  className={`text-white text-lg font-semibold shadow-xl w-56 h-12 bg-blue-600 opacity-90 hover:opacity-100 transition-opacity p-[2px] hover:bg-blue-700 px-3 py-1 rounded-md bg-gradient-to-t from-blue-600 to-blue-500 active:scale-95 ${
-                    selectedCards.length === 6
-                      ? ""
-                      : "opacity-50 cursor-not-allowed hover:opacity-50"
-                  }`}
-                  disabled={selectedCards.length !== 6}
+                  className="text-white text-lg font-semibold shadow-xl w-56 h-12 bg-blue-600 opacity-90 hover:opacity-100 transition-opacity p-[2px] hover:bg-blue-700 px-3 py-1 rounded-md bg-gradient-to-t from-blue-600 to-blue-500 active:scale-95"
                 >
                   Start playing now
                 </button>

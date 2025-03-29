@@ -25,8 +25,7 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    // Get showCards parameter from URL using URLSearchParams
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       setShowCardsOnly(params.get("showCards") === "true");
     }
@@ -125,15 +124,21 @@ export default function Home() {
                     </p>
                     {/* Buttons */}
                     <div className="mt-12 flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4">
-                      <button onClick={CreateGame} className="relative font-semibold cursor-pointer opacity-90 hover:opacity-100 transition-opacity p-[2px] bg-blue-500 rounded-[16px] bg-gradient-to-t from-blue-600 to-blue-500 active:scale-95">
+                      <button
+                        onClick={CreateGame}
+                        className="relative font-semibold cursor-pointer opacity-90 hover:opacity-100 transition-opacity p-[2px] bg-blue-500 rounded-[16px] bg-gradient-to-t from-blue-600 to-blue-500 active:scale-95"
+                      >
                         <span className="w-full h-full flex items-center gap-2 px-8 py-3 bg-blue-800 text-white rounded-[14px] bg-gradient-to-t from-blue-700 to-blue-500">
-                        <IoGameController className="text-xl" />
+                          <IoGameController className="text-xl" />
                           Create a Game
                         </span>
                       </button>
-                      <button onClick={BrowseGame} className="relative font-semibold cursor-pointer opacity-90 hover:opacity-100 transition-opacity p-[2px] bg-blue-500 rounded-[16px] bg-gradient-to-t from-blue-600 to-blue-500 active:scale-95">
+                      <button
+                        onClick={BrowseGame}
+                        className="relative font-semibold cursor-pointer opacity-90 hover:opacity-100 transition-opacity p-[2px] bg-blue-500 rounded-[16px] bg-gradient-to-t from-blue-600 to-blue-500 active:scale-95"
+                      >
                         <span className="w-full h-full flex items-center gap-2 px-8 py-3 bg-blue-800 text-white rounded-[14px] bg-gradient-to-t from-blue-700 to-blue-500">
-                        <MdBrowseGallery className="text-xl" />
+                          <MdBrowseGallery className="text-xl" />
                           Browse Game
                         </span>
                       </button>
@@ -259,60 +264,75 @@ export default function Home() {
             </div>
           </>
         )}
-        <div className="bg-gray-100 p-6 md:pt-[100px] ">
-          <div className="text-center mb-6 ">
+        {showCardsOnly === true ? (
+          <div>
+            <p className="text-red-600 md:text-3xl text-2xl text-center font-semibold mt-8 mb-8">
+              Please Buy the Game
+            </p>
+            <div className="text-center mb-6">
+              <h1 className="text-2xl md:text-4xl font-bold text-gray-800">
+                Games <span className="text-blue-500"> Packages </span>
+              </h1>
+              <p className="text-xl text-gray-600 mt-[25px] font-semibold">
+                Each user can purchase a game, play it, explore game packages,
+                and view special offers.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center mb-6 mt-28">
             <h1 className="text-2xl md:text-4xl font-bold text-gray-800">
               Games <span className="text-blue-500"> Packages </span>
             </h1>
-            <p className="text-xl  text-gray-600 mt-[25px] font-semibold">
+            <p className="text-xl text-gray-600 mt-[25px] font-semibold">
               Each user can purchase a game, play it, explore game packages, and
               view special offers.
             </p>
           </div>
-          <div className="flex flex-wrap justify-center gap-8 mt-[25px]">
-            {Games.map((games, index) => (
-              <div
-                key={index}
-                className="w-72 p-2 bg rounded-xl bg-white border border-blue-600 transform transition-all hover:-translate-y-2 duration-300 shadow-lg hover:shadow-2xl"
-              >
-                <div className="relative cursor-pointer">
-                  <img
-                    src={coll.src}
-                    alt={"Games Offers"}
-                    className="w-full h-[215px] object-cover rounded-xl blur-[2px] mt-0"
-                  />
-                  <p className="absolute inset-0 flex items-center justify-center text-black text-3xl font-semibold">
-                    {games.pac}
-                  </p>
-                </div>
-                <div className="p-2 border border-t-2 rounded-lg bg-slate-100 mt-3">
-                  <h1 className="text-xl font-bold text-center text-blue-600">
-                    {games.rs}
-                  </h1>
-                  <p className="text-lg text-center text-gray-600 font-semibold">
-                    {games.info}
-                  </p>
-                  <div className="m-2 text-center">
-                    <button
-                      onClick={() => BuyGame(games)}
-                      className="text-white text-lg font-semibold shadow-xl w-56 h-10 bg-blue-600 opacity-90 hover:opacity-100 transition-opacity p-[2px] hover:bg-blue-700 px-3 py-1 rounded-md bg-gradient-to-t from-blue-600 to-blue-500 active:scale-95"
+        )}
+        <div className="flex flex-wrap justify-center gap-8 mt-[25px]">
+          {Games.map((games, index) => (
+            <div
+              key={index}
+              className="w-72 p-2 bg rounded-xl bg-white border border-blue-600 transform transition-all hover:-translate-y-2 duration-300 shadow-lg hover:shadow-2xl"
+            >
+              <div className="relative cursor-pointer">
+                <img
+                  src={coll.src}
+                  alt={"Games Offers"}
+                  className="w-full h-[215px] object-cover rounded-xl blur-[2px] mt-0"
+                />
+                <p className="absolute inset-0 flex items-center justify-center text-black text-3xl font-semibold">
+                  {games.pac}
+                </p>
+              </div>
+              <div className="p-2 border border-t-2 rounded-lg bg-slate-100 mt-3">
+                <h1 className="text-xl font-bold text-center text-blue-600">
+                  {games.rs}
+                </h1>
+                <p className="text-lg text-center text-gray-600 font-semibold">
+                  {games.info}
+                </p>
+                <div className="m-2 text-center">
+                  <button
+                    onClick={() => BuyGame(games)}
+                    className="text-white text-lg font-semibold shadow-xl w-56 h-10 bg-blue-600 opacity-90 hover:opacity-100 transition-opacity p-[2px] hover:bg-blue-700 px-3 py-1 rounded-md bg-gradient-to-t from-blue-600 to-blue-500 active:scale-95"
+                  >
+                    <svg
+                      className="w-[4.875rem] h-[20px] mt-[6px] me-2 absolute"
+                      aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="currentColor"
+                      viewBox="0 0 18 21"
                     >
-                      <svg
-                        className="w-[4.875rem] h-[20px] mt-[6px] me-2 absolute"
-                        aria-hidden="true"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="currentColor"
-                        viewBox="0 0 18 21"
-                      >
-                        <path d="M15 12a1 1 0 0 0 .962-.726l2-7A1 1 0 0 0 17 3H3.77L3.175.745A1 1 0 0 0 2.208 0H1a1 1 0 0 0 0 2h.438l.6 2.255v.019l2 7 .746 2.986A3 3 0 1 0 9 17a2.966 2.966 0 0 0-.184-1h2.368c-.118.32-.18.659-.184 1a3 3 0 1 0 3-3H6.78l-.5-2H15Z" />
-                      </svg>
-                      buy Now
-                    </button>
-                  </div>
+                      <path d="M15 12a1 1 0 0 0 .962-.726l2-7A1 1 0 0 0 17 3H3.77L3.175.745A1 1 0 0 0 2.208 0H1a1 1 0 0 0 0 2h.438l.6 2.255v.019l2 7 .746 2.986A3 3 0 1 0 9 17a2.966 2.966 0 0 0-.184-1h2.368c-.118.32-.18.659-.184 1a3 3 0 1 0 3-3H6.78l-.5-2H15Z" />
+                    </svg>
+                    buy Now
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
       <Footer />

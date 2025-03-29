@@ -8,6 +8,9 @@ import {
   CardCvcElement,
 } from "@stripe/react-stripe-js";
 import { auth } from "../../firebase/firebaseConfig"; 
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 
 const CheckoutForm = () => {
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -20,31 +23,27 @@ const CheckoutForm = () => {
 
   const userId = userEmail;
   
-  useEffect(() => {
-    // Client-side URL parsing
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      setPac(params.get("pac") || "");
-      setRs(params.get("rs") || "");
-    }
-  }, []);
-
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
 
 
-    useEffect(() => {
-      const unsubscribe = auth.onAuthStateChanged((user) => {
-        if (user) {
-          setUserEmail(user.email);
-        } else {
-          router.push("/login");
-        }
-      });
-      return () => unsubscribe();
-    }, []);
-    console.log("email : ", userEmail);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      setPac(params.get("pac") || "");
+      setRs(params.get("rs") || "");
+    }
+
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setUserEmail(user.email);
+      } else {
+        router.push("/login");
+      }
+    });
+    return () => unsubscribe();
+  }, []);
   
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -52,79 +51,126 @@ const CheckoutForm = () => {
     setLoading(true);
     setError(null);
 
+  
     if (!stripe || !elements) {
-      setError("Stripe is not properly initialized.");
+      toast.error("Payment system is not ready. Please try again later.");
       setLoading(false);
       return;
     }
-
-    const cardNumberElement = elements.getElement(CardNumberElement);
-    const cardExpiryElement = elements.getElement(CardExpiryElement);
-    const cardCvcElement = elements.getElement(CardCvcElement);
-
-    if (!cardNumberElement || !cardExpiryElement || !cardCvcElement) {
-      setError("Card information is missing.");
+  
+    try {
+      // 1. Get card elements
+      const cardNumberElement = elements.getElement(CardNumberElement);
+      if (!cardNumberElement) throw new Error("Card information is missing.");
+  
+      // 2. Create payment method
+      const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
+        type: "card",
+        card: cardNumberElement,
+      });
+      if (stripeError) throw stripeError;
+      if (!paymentMethod?.id) throw new Error("Failed to create payment method");
+  
+      // 3. Prepare payment data
+      const amountInCents = parseInt(rs.replace(/[^0-9]/g, "")) * 100;
+      const user = auth.currentUser;
+      if (!user) throw new Error("User is not authenticated.");
+      const token = await user.getIdToken();
+  
+      // 4. Construct API URL - guaranteed to be valid
+      let apiUrl;
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+        apiUrl = new URL('/api/payment', baseUrl).toString();
+      } catch (urlError) {
+        throw new Error("Failed to construct payment endpoint URL");
+      }
+  
+      // 5. Make the API request
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          paymentMethodId: paymentMethod.id,
+          amount: amountInCents,
+          userEmail, 
+          pac,
+          rs,
+        }),
+      });
+  
+      // 6. Handle response
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error("Failed to parse response:", response.status, response.statusText);
+        throw new Error("Payment processing failed - invalid server response");
+      }
+  
+      if (!response.ok) {
+        console.error("Payment API Error:", {
+          status: response.status,
+          statusText: response.statusText,
+          url: apiUrl,
+          requestData: {
+            amount: amountInCents,
+            pac,
+            rs
+          },
+          responseData: data
+        });
+        
+        throw new Error(
+          data?.message || 
+          data?.error?.message || 
+          `Payment failed (Status ${response.status})`
+        );
+      }
+  
+      // 7. Handle success
+      if (data.paymentIntent?.status === "succeeded") {
+        toast.success("Payment successful! Redirecting...");
+        setSuccess(true);
+        setTimeout(() => router.push("/dashboard"), 2000);
+      } else {
+        throw new Error("Payment processing - check your email for confirmation");
+      }
+    } catch (err: any) {
+      console.log("Payment Error:", err);
+      
+      // Handle specific Stripe card errors
+      if (err.message.includes("card number is incorrect")) {
+        toast.error(
+          <div>
+            <p>Your card number is incorrect</p>
+            <p>Try test card: <strong>4242 4242 4242 4242</strong></p>
+          </div>,
+          {
+            autoClose: 6000,
+            closeButton: true,
+          }
+        );
+      } else {
+        toast.error(err.message || "Payment failed. Please try again.");
+      }
+      
+      setError(err.message || "Payment failed");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const { error, paymentMethod } = await stripe.createPaymentMethod({
-      type: "card",
-      card: cardNumberElement,
-    });
-
-    if (error) {
-      setError(error.message ?? "Something went wrong");
-      setLoading(false);
-      return;
-    }
-
-    const amountInCents = parseInt(rs.replace(/[^0-9]/g, "")) * 100;
-
-    const user = auth.currentUser;
-    if (!user) {
-      setError("User is not authenticated.");
-      setLoading(false);
-      return;
-    }
-
-    const token = await user.getIdToken(); 
-
-// In your handleSubmit function, update the response handling:
-const response = await fetch("/api/payment", {
-  method: "POST",
-  headers: { 
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${token}` // Add auth token if needed
-  },
-  body: JSON.stringify({
-    paymentMethodId: paymentMethod.id,
-    amount: amountInCents,
-    userEmail, 
-    pac,
-    rs,
-  }),
-});
-
-const data = await response.json();
-
-if (!response.ok) {
-  console.error("Payment failed:", data);
-  setError(data.message || "Payment failed");
-  setLoading(false);
-  return;
-}
-
-if (data.paymentIntent.status === "succeeded") {
-  setSuccess(true);
-  router.push("/dashboard");
-} else {
-  setError("Payment processing - please check your email for confirmation");
-}    setLoading(false);
   };
 
+      
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4">
+      <ToastContainer
+              position="top-center"
+              className="text-center font-semibold"
+            />
       <div className="w-full max-w-lg p-6 bg-white rounded-lg shadow-lg">
         <h2 className="text-2xl font-semibold text-gray-700 text-center mb-4">
           Buy Games
@@ -190,6 +236,7 @@ if (data.paymentIntent.status === "succeeded") {
                 <option value="CA">Canada</option>
                 <option value="UK">United Kingdom</option>
                 <option value="AU">Australia</option>
+                <option value="PK">Pakistan</option>
                 <option value="IN">India</option>
               </select>
             </div>

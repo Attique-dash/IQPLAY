@@ -56,9 +56,27 @@ export default function Login() {
     }));
   };
 
-  const handleFormSwitch = () => {
+  const handleFormSwitch = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault(); // Prevent form submission
     setIsRegistering(!isRegistering);
     setError(null);
+    setSuccess(null);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const form = e.currentTarget.form;
+      if (form) {
+        const inputs = Array.from(form.querySelectorAll('input'));
+        const index = inputs.indexOf(e.currentTarget);
+        if (index < inputs.length - 1) {
+          inputs[index + 1].focus();
+        } else {
+          form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+        }
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -188,17 +206,10 @@ export default function Login() {
             <h2 className="text-2xl text-blue-600 font-bold text-center mb-5">
               {isRegistering ? "Create Account" : "Log In"}
             </h2>
-            {error ? (
-              <ToastContainer
-                position="top-center"
-                className="text-center font-semibold"
-              />
-            ) : success ? (
-              <ToastContainer
-                position="top-center"
-                className="text-center font-semibold"
-              />
-            ) : null}
+            <ToastContainer
+              position="top-center"
+              className="text-center font-semibold"
+            />
             {isRegistering && (
               <>
                 <div className="mb-3 relative px-3">
@@ -208,6 +219,7 @@ export default function Login() {
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
                     placeholder="First Name"
                     className="bg-gray-50 border md:h-[45px] border-gray-300 text-gray-900 text-base rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2 dark:placeholder-gray-400 dark:text-black dark:focus:ring-blue-500 dark:focus:border-blue-500"
                   />
@@ -219,6 +231,7 @@ export default function Login() {
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
                     placeholder="Last Name"
                     className="bg-gray-50 border md:h-[45px] border-gray-300 text-gray-900 text-base rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2 dark:placeholder-gray-400 dark:text-black dark:focus:ring-blue-500 dark:focus:border-blue-500"
                   />
@@ -230,6 +243,7 @@ export default function Login() {
                     name="phoneNo"
                     value={formData.phoneNo}
                     onChange={PhoneInputChange}
+                    onKeyDown={handleKeyDown}
                     placeholder="Phone Number"
                     className="bg-gray-50 border md:h-[45px] border-gray-300 text-gray-900 text-base rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2 dark:placeholder-gray-400 dark:text-black dark:focus:ring-blue-500 dark:focus:border-blue-500"
                   />
@@ -243,6 +257,7 @@ export default function Login() {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
                 placeholder="Email"
                 className="bg-gray-50 border md:h-[45px] border-gray-300 text-gray-900 text-base rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2 dark:placeholder-gray-400 dark:text-black dark:focus:ring-blue-500 dark:focus:border-blue-500"
               />
@@ -254,6 +269,7 @@ export default function Login() {
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
                 placeholder="Password"
                 className="bg-gray-50 border pr-11 md:h-[45px] border-gray-300 text-gray-900 text-base rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2 dark:placeholder-gray-400 dark:text-black dark:focus:ring-blue-500 dark:focus:border-blue-500"
               />

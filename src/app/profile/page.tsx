@@ -136,121 +136,128 @@ export default function Profile() {
 
   return (
     <>
-<div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-4 md:p-6">
-  <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transition-all transform hover:scale-[1.01] duration-300">
-    {/* Profile Image with Glow Effect */}
-    <div className="relative w-32 h-32 mx-auto -mt-20 rounded-full overflow-hidden border-4 border-white shadow-lg ring-4 ring-blue-200/50 hover:ring-blue-300/70 transition-all">
-      <Image
-        src={profile}
-        alt="Profile"
-        width={144}
-        height={144}
-        className="object-cover w-full h-full"
-      />
-      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-blue-100/20 rounded-full"></div>
-    </div>
-
-    {/* User Info Section */}
-    <div className="text-center mt-6 space-y-2">
-      <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-        Welcome, {userInfo.firstName} {userInfo.lastName}!
-      </h2>
-      <p className="text-sm text-gray-500">Member since {new Date().toLocaleDateString()}</p>
-      
-      <div className="mt-4 p-4 bg-gray-50 rounded-lg text-left">
-        <div className="flex items-center space-x-3 mb-3">
-          <FiMail className="text-blue-500 text-lg" />
-          <span className="text-gray-700">
-            <span className="font-medium text-gray-900">Email:</span> {userInfo.email}
-          </span>
+<div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-500 via-blue-400 to-gray-500 p-4 md:p-6">
+  <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl p-6 transition-all transform hover:scale-[1.01] duration-300">
+    {/* Flex container for responsive layout */}
+    <div className="flex flex-col md:flex-row gap-8">
+      {/* Left Column - Profile Info (shows first on mobile) */}
+      <div className="flex-1 flex flex-col items-center md:items-start">
+        {/* Profile Image with Glow Effect */}
+        <div className="relative w-32 h-32 md:-mt-20 rounded-full overflow-hidden border-4 border-white shadow-lg ring-4 ring-blue-200/50 hover:ring-blue-400 transition-all">
+          <Image
+            src={profile}
+            alt="Profile"
+            width={144}
+            height={144}
+            className="object-cover w-full h-full mt-0"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-blue-100/20 rounded-full"></div>
         </div>
-        <div className="flex items-center space-x-3">
-          <FiPhone className="text-blue-500 text-lg" />
-          <span className="text-gray-700">
-            <span className="font-medium text-gray-900">Phone:</span> {userInfo.phoneNo || 'Not provided'}
-          </span>
+
+        {/* User Info Section */}
+        <div className="text-center md:text-left mt-6 space-y-2 w-full">
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Welcome, {userInfo.firstName} {userInfo.lastName}!
+          </h2>
+          <p className="text-sm text-gray-500">Member since {new Date().toLocaleDateString()}</p>
+          
+          <div className="mt-4 p-4 bg-gray-100 rounded-lg">
+            <div className="flex items-center space-x-3 mb-3">
+              <FiMail className="text-blue-500 text-lg" />
+              <span className="text-gray-700">
+                <span className="font-medium text-gray-900">Email:</span> {userInfo.email}
+              </span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <FiPhone className="text-blue-500 text-lg" />
+              <span className="text-gray-700">
+                <span className="font-medium text-gray-900">Phone:</span> {userInfo.phoneNo || 'Not provided'}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    {/* Change Password Section */}
-    <div className="mt-8">
-      <h3 className="text-center mb-4 text-lg font-semibold bg-gradient-to-r from-yellow-500 to-orange-500 bg-clip-text text-transparent">
-        Change Password
-      </h3>
-      
-      {/* Current Password */}
-      <div className="mb-4 relative">
-        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-          <FaUnlockKeyhole className="text-blue-500" />
-        </div>
-        <input
-          type={showPassword ? "text" : "password"}
-          name="PrevPass"
-          value={changepass.PrevPass}
-          onChange={handleInputChange}
-          placeholder="New Password"
-          required
-          className="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 pr-10 transition-all"
-        />
-        <button
-          type="button"
-          onClick={togglePasswordVisibility}
-          className="absolute inset-y-0 right-0 flex items-center pr-3 text-blue-500 hover:text-blue-700"
-        >
-          {showPassword ? <BiSolidShow /> : <BiSolidHide />}
-        </button>
-      </div>
-
-      {/* Confirm Password */}
-      <div className="mb-6 relative">
-        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-          <FaUnlockKeyhole className="text-blue-500" />
-        </div>
-        <input
-          type={showPassword ? "text" : "password"}
-          name="confPass"
-          value={changepass.confPass}
-          onChange={handleInputChange}
-          placeholder="Confirm Password"
-          required
-          className="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 pr-10 transition-all"
-        />
-        <button
-          type="button"
-          onClick={togglePasswordVisibility}
-          className="absolute inset-y-0 right-0 flex items-center pr-3 text-blue-500 hover:text-blue-700"
-        >
-          {showPassword ? <BiSolidShow /> : <BiSolidHide />}
-        </button>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="space-y-3">
-        <button
-          onClick={changePassword}
-          className="w-full py-2.5 px-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-medium hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg"
-        >
-          Set Password
-        </button>
-
-        <div className="grid grid-cols-2 gap-3">
+      {/* Right Column - Change Password (shows second on mobile) */}
+      <div className="flex-1 mt-8 md:mt-0">
+        <h3 className="text-center mb-4 text-lg font-semibold bg-gradient-to-r from-yellow-500 to-orange-500 bg-clip-text text-transparent">
+          Change Password
+        </h3>
+        
+        {/* Current Password */}
+        <div className="mb-4 relative">
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <FaUnlockKeyhole className="text-blue-500" />
+          </div>
+          <input
+            type={showPassword ? "text" : "password"}
+            name="PrevPass"
+            value={changepass.PrevPass}
+            onChange={handleInputChange}
+            placeholder="New Password"
+            required
+            className="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 pr-10 transition-all"
+          />
           <button
-            onClick={handleLogout}
-            className="py-2 px-4 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg font-medium hover:from-red-600 hover:to-red-700 transition-all shadow-md hover:shadow-lg"
+            type="button"
+            onClick={togglePasswordVisibility}
+            className="absolute inset-y-0 right-0 flex items-center pr-3 text-blue-500 hover:text-blue-700"
           >
-            Logout
+            {showPassword ? <BiSolidShow /> : <BiSolidHide />}
           </button>
+        </div>
+
+        {/* Confirm Password */}
+        <div className="mb-6 relative">
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <FaUnlockKeyhole className="text-blue-500" />
+          </div>
+          <input
+            type={showPassword ? "text" : "password"}
+            name="confPass"
+            value={changepass.confPass}
+            onChange={handleInputChange}
+            placeholder="Confirm Password"
+            required
+            className="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 pr-10 transition-all"
+          />
           <button
-            onClick={() => router.push("/dashboard")}
-            className="py-2 px-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-medium hover:from-green-600 hover:to-green-700 transition-all shadow-md hover:shadow-lg"
+            type="button"
+            onClick={togglePasswordVisibility}
+            className="absolute inset-y-0 right-0 flex items-center pr-3 text-blue-500 hover:text-blue-700"
           >
-            Go Back
+            {showPassword ? <BiSolidShow /> : <BiSolidHide />}
           </button>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="space-y-3">
+          <button
+            onClick={changePassword}
+            className="w-full py-2.5 px-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-medium hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg"
+          >
+            Set Password
+          </button>
+
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={handleLogout}
+              className="py-2 px-4 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg font-medium hover:from-red-600 hover:to-red-700 transition-all shadow-md hover:shadow-lg"
+            >
+              Logout
+            </button>
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="py-2 px-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-medium hover:from-green-600 hover:to-green-700 transition-all shadow-md hover:shadow-lg"
+            >
+              Go Back
+            </button>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>    </>
+</div>
+</>
   );
 }

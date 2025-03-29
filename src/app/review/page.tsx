@@ -26,7 +26,7 @@ export default function Review() {
       setGameId(id);
     }
   }, []);
-  
+
   useEffect(() => {
     if (!gameId) return;
 
@@ -128,6 +128,13 @@ export default function Review() {
                   className="mt-0"
                 />
                 <p className="sm:text-3xl text-2xl font-semibold ml-5">IQPLAY</p>
+                <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className=" ml-4 text-3xl focus:outline-none"
+          >
+            {menuOpen ? <FaTimes /> : null}
+          </button>
+
               </div>
 
               <button
@@ -141,14 +148,14 @@ export default function Review() {
 
         <button
           onClick={() => router.push(`/creategame?gameId=${gameId}`)}
-          className={`ml-auto bg-red-500 font-semibold text-white px-4 py-2 rounded-lg w-24 hidden md:block`}
+          className={`ml-auto bg-red-500 font-semibold mr-8 text-white px-4 py-2 rounded-lg w-24 hidden md:block`}
         >
           Exit
         </button>
       </header>
 
 
-      <div className="bg-white shadow-lg rounded-lg p-6 mt-6 w-11/12 md:w-3/4">
+      <div className="bg-white shadow-lg rounded-lg p-6 mt-6 w-11/12 md:w-3/4 mb-6">
         <p className="text-2xl md:text-3xl font-semibold mt-4 text-gray-700 text-center">
           {question}
         </p>
