@@ -14,7 +14,7 @@ import {
   getDocs,
   updateDoc,
   DocumentReference,
-  deleteDoc
+  deleteDoc,
 } from "firebase/firestore";
 import Header from "@/components/header";
 import Image from "next/image";
@@ -117,50 +117,55 @@ export default function Dashboard() {
   const handleSubmit = async () => {
     // Clear previous errors
     setError(null);
-  
+
     // Validate all fields with specific error messages
     if (!gameData.gameName.trim()) {
       toast.error("Please enter your game name");
       return;
     }
-  
+
     if (!gameData.playerOne.trim()) {
       toast.error("Please enter first player name");
       return;
     }
-  
+
     if (!gameData.playerTwo.trim()) {
       toast.error("Please enter second player name");
       return;
     }
-  
+
     if (selectedCards.length !== 6) {
-      toast.error(`Please select exactly 6 categories (${selectedCards.length} selected)`);
+      toast.error(
+        `Please select exactly 6 categories (${selectedCards.length} selected)`
+      );
       return;
     }
-  
+
     // Check if userEmail exists
     if (!userEmail) {
       toast.error("User authentication error. Please login again.");
       return;
     }
-  
+
     // Proceed with game creation if all validations pass
     try {
       const sanitizedEmail = userEmail.replace(/\./g, "_");
       const userGameCollection = collection(db, sanitizedEmail);
-      
+
       // Check for existing game with same name
       const querySnapshot = await getDocs(userGameCollection);
       const existingGame = querySnapshot.docs.some(
-        (doc) => doc.data().gameName.toLowerCase() === gameData.gameName.toLowerCase()
+        (doc) =>
+          doc.data().gameName.toLowerCase() === gameData.gameName.toLowerCase()
       );
-  
+
       if (existingGame) {
-        toast.error("Game name already exists. Please choose a different name.");
+        toast.error(
+          "Game name already exists. Please choose a different name."
+        );
         return;
       }
-  
+
       // Check payment status for ALL game creations
       const correctEmail = userEmail.replace(/_/g, ".");
       const paymentsRef = collection(db, "payments");
@@ -169,17 +174,20 @@ export default function Dashboard() {
         where("userEmail", "==", correctEmail)
       );
       const paymentsSnap = await getDocs(paymentsQuery);
-  
+
       let hasValidPackage = false;
       let docToUpdate: DocumentReference | null = null;
       let currentPackageValue: string | null = null;
       let docsToDelete: DocumentReference[] = [];
-  
+
       if (!paymentsSnap.empty) {
         // First pass: Find all invalid packages (0 games) to delete
         for (const doc of paymentsSnap.docs) {
           const data = doc.data();
-          if (data.userEmail === correctEmail && typeof data.package === "string") {
+          if (
+            data.userEmail === correctEmail &&
+            typeof data.package === "string"
+          ) {
             const numberMatch = data.package.match(/\d+/);
             if (numberMatch) {
               const packageNumber = parseInt(numberMatch[0], 10);
@@ -189,17 +197,20 @@ export default function Dashboard() {
             }
           }
         }
-  
+
         // Delete all invalid packages first
         if (docsToDelete.length > 0) {
-          await Promise.all(docsToDelete.map(doc => deleteDoc(doc)));
+          await Promise.all(docsToDelete.map((doc) => deleteDoc(doc)));
         }
-  
+
         // Second pass: Check remaining valid packages
         const updatedPaymentsSnap = await getDocs(paymentsQuery);
         for (const doc of updatedPaymentsSnap.docs) {
           const data = doc.data();
-          if (data.userEmail === correctEmail && typeof data.package === "string") {
+          if (
+            data.userEmail === correctEmail &&
+            typeof data.package === "string"
+          ) {
             const numberMatch = data.package.match(/\d+/);
             if (numberMatch) {
               const packageNumber = parseInt(numberMatch[0], 10);
@@ -213,21 +224,21 @@ export default function Dashboard() {
           }
         }
       }
-  
+
       // Only allow game creation if valid package exists
       if (!hasValidPackage) {
         toast.error("Please buy a game package to continue creating");
         router.push("/?showCards=true");
         return;
       }
-  
+
       // Create the game document (only reaches here if hasValidPackage)
       const docRef = await addDoc(userGameCollection, {
         ...gameData,
         selectedCards,
         createdAt: Timestamp.now(),
       });
-  
+
       // Update package count (we know hasValidPackage is true here)
       if (docToUpdate && currentPackageValue) {
         const numberMatch = currentPackageValue.match(/\d+/);
@@ -235,16 +246,15 @@ export default function Dashboard() {
           let packageNumber = parseInt(numberMatch[0], 10);
           packageNumber--;
           const updatedPackageValue = `${packageNumber} Games`;
-  
+
           await updateDoc(docToUpdate, {
             package: updatedPackageValue,
           });
         }
       }
-  
+
       toast.success("Game created successfully!");
       router.push(`/creategame?gameId=${docRef.id}`);
-  
     } catch (error) {
       console.error("Error saving game info:", error);
       toast.error("Something went wrong. Please try again.");
@@ -261,7 +271,7 @@ export default function Dashboard() {
       <div>
         {showBroGame ? (
           <div className="container mx-auto p-4 mt-5">
-            <BrowserGame onShowDashboard={handleShowDashboard} />
+            <BrowserGame />
           </div>
         ) : (
           <>

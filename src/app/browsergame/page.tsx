@@ -7,11 +7,8 @@ import { collection, getDocs } from "firebase/firestore";
 import { FaSearch } from "react-icons/fa";
 import Image from "next/image";
 
-interface BrowserGameProps {
-  onShowDashboard: () => void;
-}
 
-export default function BrowserGame({ onShowDashboard }: BrowserGameProps) {
+export default function BrowserGame() {
   const [games, setGames] = useState<any[]>([]);
   const [filteredGames, setFilteredGames] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -20,8 +17,23 @@ export default function BrowserGame({ onShowDashboard }: BrowserGameProps) {
   const [totalGames, setTotalGames] = useState<number>(0);
   const router = useRouter();
 
+  const getQueryParams = () => {
+    if (typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search);
+    }
+    return new URLSearchParams();
+  };
+
+
 
   useEffect(() => {
+    const params = getQueryParams();
+    const showDashboard = params.get('showDashboard') === 'true';
+    
+    if (showDashboard) {
+      // Handle dashboard show logic here if needed
+    }
+
     const fetchGames = async () => {
       setLoading(true);
       try {
@@ -36,7 +48,7 @@ export default function BrowserGame({ onShowDashboard }: BrowserGameProps) {
           const querySnapshot = await getDocs(userCollection);
 
           if (querySnapshot.empty) {
-            setError("No have a browser game data.");
+            setError("No browser game data available.");
             setGames([]);
             setFilteredGames([]);
           } else {
@@ -49,7 +61,6 @@ export default function BrowserGame({ onShowDashboard }: BrowserGameProps) {
             setError(null);
           }
 
-          // Fetch the number of games from payments collection
           await fetchTotalGames(user.email);
         });
       } catch (err) {
@@ -95,11 +106,13 @@ export default function BrowserGame({ onShowDashboard }: BrowserGameProps) {
   };
 
   const handleCreateGame = () => {
-    onShowDashboard(); // Call parent's function to show dashboard
+    router.push("/dashboard"); // or your dashboard route
   };
 
   const handleBuyGame = () => {
-    router.push("/?showCards=true");
+    const params = new URLSearchParams();
+    params.set('showCards', 'true');
+    router.push(`/?${params.toString()}`);
   };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
