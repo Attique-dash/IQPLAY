@@ -80,8 +80,8 @@ const CheckoutForm = () => {
       // 4. Construct API URL - guaranteed to be valid
       let apiUrl;
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
-        apiUrl = new URL('/api/payment', baseUrl).toString();
+        // Use relative path instead of absolute URL
+        apiUrl = '/api/payment';
       } catch (urlError) {
         throw new Error("Failed to construct payment endpoint URL");
       }

@@ -51,8 +51,8 @@ export default function Header() {
     try {
       await signOut(auth);
       setUserName(null);
-            toast.success("Logout Successfully");
       router.push("/login");
+      toast.success("Logout Successfully");
     } catch (error) {
       console.error("Error logging out:", error);
     }

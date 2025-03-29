@@ -9,10 +9,21 @@ if (!stripeSecretKey) {
 }
 
 const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: "2025-02-24.acacia" // Match exactly with your installed Stripe types
+  apiVersion: "2025-02-24.acacia"
 });
 
 export async function POST(req: NextRequest) {
+  // Set CORS headers
+  const headers = new Headers();
+  headers.set('Access-Control-Allow-Origin', process.env.NEXT_PUBLIC_SITE_URL || '*');
+  headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  // Handle preflight request
+  if (req.method === 'OPTIONS') {
+    return new NextResponse(null, { headers });
+  }
+
   try {
     const body = await req.json();
     const { paymentMethodId, amount, userEmail, pac, rs } = body;
@@ -39,7 +50,7 @@ export async function POST(req: NextRequest) {
       return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard`,
     });
 
-    // Save to Firestore - with enhanced error handling
+    // Save to Firestore
     let firestoreSuccess = false;
     try {
       const docRef = await addDoc(collection(db, "payments"), {
@@ -49,17 +60,15 @@ export async function POST(req: NextRequest) {
         paymentIntentId: paymentIntent.id,
         createdAt: serverTimestamp(),
         status: paymentIntent.status,
-        stripeAmount: amount, // Store the actual amount used in Stripe
+        stripeAmount: amount,
         timestamp: new Date().toISOString()
       });
       firestoreSuccess = true;
-      console.log("Firestore document written with ID: ", docRef.id);
     } catch (firestoreError) {
       console.error("Firestore save error:", firestoreError);
-      // Send email/admin alert about Firestore failure
     }
 
-    return NextResponse.json({ 
+    return new NextResponse(JSON.stringify({ 
       success: true,
       firestoreSuccess,
       paymentIntent: {
@@ -67,26 +76,26 @@ export async function POST(req: NextRequest) {
         status: paymentIntent.status,
         amount: paymentIntent.amount,
         currency: paymentIntent.currency
-      },
-      clientSecret: paymentIntent.client_secret 
-    });
+      }
+    }), { headers });
 
   } catch (error: any) {
-    console.error("API Error Details:", {
-      error: error,
-      message: error.message,
-      stack: error.stack,
-      type: error.type
+    console.error("Payment Error:", error);
+    return new NextResponse(JSON.stringify({ 
+      success: false, 
+      message: error.message || "Payment processing failed",
+      errorType: error.type || "api_error"
+    }), { 
+      status: error.statusCode || 500,
+      headers 
     });
-    
-    return NextResponse.json(
-      { 
-        success: false, 
-        message: error.message || "Payment processing failed",
-        errorType: error.type || "api_error",
-        stack: process.env.NODE_ENV === "development" ? error.stack : undefined
-      },
-      { status: error.statusCode || 500 }
-    );
   }
+}
+
+export async function OPTIONS() {
+  const headers = new Headers();
+  headers.set('Access-Control-Allow-Origin', process.env.NEXT_PUBLIC_SITE_URL || '*');
+  headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  return new NextResponse(null, { headers });
 }
