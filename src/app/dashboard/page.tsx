@@ -41,7 +41,7 @@ import cube from "../../../public/images/rubik's cube.jpg";
 import skat from "../../../public/images/Skating.jpg";
 import base from "../../../public/images/Baseball.jpg";
 import snoo from "../../../public/images/Snooker.jpg";
-import BrowserGame from "../browsergame/page";
+import BrowserGame from "@/components/BrowserGame";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -67,11 +67,7 @@ export default function Dashboard() {
       }
     });
     return () => unsubscribe();
-  }, []);
-
-  const handleShowDashboard = () => {
-    setShowBroGame(false); // This will show the dashboard content
-  };
+  }, [router]);
 
   const cards = [
     { image: circ, title: "Cricket" },
@@ -271,7 +267,10 @@ export default function Dashboard() {
       <div>
         {showBroGame ? (
           <div className="container mx-auto p-4 mt-5">
-            <BrowserGame />
+            <BrowserGame
+              onShowDashboard={() => setShowBroGame(false)}
+              onShowBrowserGame={() => setShowBroGame(true)}
+            />
           </div>
         ) : (
           <>
