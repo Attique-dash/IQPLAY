@@ -1,26 +1,19 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { auth, db } from "../../firebase/firebaseConfig";
 import {
-  collection,
-  addDoc,
-  Timestamp,
-  query,
-  where,
-  getDocs,
-  updateDoc,
-  DocumentReference,
-  deleteDoc,
+  collection, addDoc, Timestamp, query, where,
+  getDocs, updateDoc, DocumentReference, deleteDoc,
 } from "firebase/firestore";
 import Header from "@/components/header";
 import Image from "next/image";
-import bgvs from "../../../public/images/bgvs.png";
-import ftvs from "../../../public/images/ftvs.jpg";
 import Footer from "@/components/footer";
+import BrowserGame from "@/components/BrowserGame";
+
+// image imports
 import circ from "../../../public/images/Cricket.jpg";
 import foot from "../../../public/images/Football.jpg";
 import bask from "../../../public/images/Basketball.jpeg";
@@ -41,134 +34,67 @@ import cube from "../../../public/images/rubik's cube.jpg";
 import skat from "../../../public/images/Skating.jpg";
 import base from "../../../public/images/Baseball.jpg";
 import snoo from "../../../public/images/Snooker.jpg";
-import BrowserGame from "@/components/BrowserGame";
+import bgvs from "../../../public/images/bgvs.png";
+import ftvs from "../../../public/images/ftvs.jpg";
 
 export default function Dashboard() {
   const router = useRouter();
-
-  const [selectedCards, setSelectedCards] = useState<
-    { title: string; image: any }[]
-  >([]);
+  const [selectedCards, setSelectedCards] = useState<{ title: string; image: any }[]>([]);
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [showBroGame, setShowBroGame] = useState(true);
-  const [gameData, setGameData] = useState({
-    gameName: "",
-    playerOne: "",
-    playerTwo: "",
-  });
+  const [gameData, setGameData] = useState({ gameName: "", playerOne: "", playerTwo: "" });
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        setUserEmail(user.email);
-      } else {
-        router.push("/login");
-      }
+    const unsub = auth.onAuthStateChanged((user) => {
+      if (user) setUserEmail(user.email);
+      else router.push("/login");
     });
-    return () => unsubscribe();
+    return () => unsub();
   }, [router]);
 
   const cards = [
-    { image: circ, title: "Cricket" },
-    { image: foot, title: "Football" },
-    { image: bask, title: "Basketball" },
-    { image: tenn, title: "Tennis" },
-    { image: hock, title: "Hockey" },
-    { image: boxi, title: "Boxing" },
-    { image: cycl, title: "Cycling" },
-    { image: swim, title: "Swimming" },
-    { image: wres, title: "Wrestling" },
-    { image: raci, title: "Racing" },
-    { image: ludo, title: "Ludo" },
-    { image: subw, title: "Subway Surfers" },
-    { image: pubg, title: "PUBG Mobile" },
-    { image: ches, title: "Chess" },
-    { image: carr, title: "Carrom Board" },
-    { image: tict, title: "Tic-tac-toe" },
-    { image: cube, title: "rubik's cube" },
-    { image: skat, title: "Skating" },
-    { image: base, title: "Baseball" },
-    { image: snoo, title: "Snooker" },
+    { image: circ, title: "Cricket" }, { image: foot, title: "Football" },
+    { image: bask, title: "Basketball" }, { image: tenn, title: "Tennis" },
+    { image: hock, title: "Hockey" }, { image: boxi, title: "Boxing" },
+    { image: cycl, title: "Cycling" }, { image: swim, title: "Swimming" },
+    { image: wres, title: "Wrestling" }, { image: raci, title: "Racing" },
+    { image: ludo, title: "Ludo" }, { image: subw, title: "Subway Surfers" },
+    { image: pubg, title: "PUBG Mobile" }, { image: ches, title: "Chess" },
+    { image: carr, title: "Carrom Board" }, { image: tict, title: "Tic-tac-toe" },
+    { image: cube, title: "Rubik's Cube" }, { image: skat, title: "Skating" },
+    { image: base, title: "Baseball" }, { image: snoo, title: "Snooker" },
   ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setGameData({ ...gameData, [e.target.name]: e.target.value });
   };
 
-  const handleSelectCard = (selectedCard: { title: string; image: any }) => {
-    setSelectedCards((prev) => {
-      const exists = prev.some((card) => card.title === selectedCard.title);
-
-      if (exists) {
-        return prev.filter((card) => card.title !== selectedCard.title);
-      } else if (prev.length < 6) {
-        return [...prev, selectedCard];
-      }
-
+  const handleSelectCard = (card: { title: string; image: any }) => {
+    setSelectedCards(prev => {
+      const exists = prev.some(c => c.title === card.title);
+      if (exists) return prev.filter(c => c.title !== card.title);
+      if (prev.length < 6) return [...prev, card];
       return prev;
     });
   };
 
   const handleSubmit = async () => {
-    // Clear previous errors
-    setError(null);
+    if (!gameData.gameName.trim()) { toast.error("Please enter a game name"); return; }
+    if (!gameData.playerOne.trim()) { toast.error("Please enter Player 1 name"); return; }
+    if (!gameData.playerTwo.trim()) { toast.error("Please enter Player 2 name"); return; }
+    if (selectedCards.length !== 6) { toast.error(`Select exactly 6 categories (${selectedCards.length} selected)`); return; }
+    if (!userEmail) { toast.error("Authentication error. Please login again."); return; }
 
-    // Validate all fields with specific error messages
-    if (!gameData.gameName.trim()) {
-      toast.error("Please enter your game name");
-      return;
-    }
-
-    if (!gameData.playerOne.trim()) {
-      toast.error("Please enter first player name");
-      return;
-    }
-
-    if (!gameData.playerTwo.trim()) {
-      toast.error("Please enter second player name");
-      return;
-    }
-
-    if (selectedCards.length !== 6) {
-      toast.error(
-        `Please select exactly 6 categories (${selectedCards.length} selected)`
-      );
-      return;
-    }
-
-    // Check if userEmail exists
-    if (!userEmail) {
-      toast.error("User authentication error. Please login again.");
-      return;
-    }
-
-    // Proceed with game creation if all validations pass
     try {
       const sanitizedEmail = userEmail.replace(/\./g, "_");
       const userGameCollection = collection(db, sanitizedEmail);
-
-      // Check for existing game with same name
       const querySnapshot = await getDocs(userGameCollection);
-      const existingGame = querySnapshot.docs.some(
-        (doc) =>
-          doc.data().gameName.toLowerCase() === gameData.gameName.toLowerCase()
-      );
+      const existingGame = querySnapshot.docs.some(d => d.data().gameName.toLowerCase() === gameData.gameName.toLowerCase());
+      if (existingGame) { toast.error("Game name already exists"); return; }
 
-      if (existingGame) {
-        toast.error(
-          "Game name already exists. Please choose a different name."
-        );
-        return;
-      }
-
-      // Check payment status for ALL game creations
       const correctEmail = userEmail.replace(/_/g, ".");
       const paymentsRef = collection(db, "payments");
-      const paymentsQuery = query(
-        paymentsRef,
-        where("userEmail", "==", correctEmail)
-      );
+      const paymentsQuery = query(paymentsRef, where("userEmail", "==", correctEmail));
       const paymentsSnap = await getDocs(paymentsQuery);
 
       let hasValidPackage = false;
@@ -177,96 +103,379 @@ export default function Dashboard() {
       let docsToDelete: DocumentReference[] = [];
 
       if (!paymentsSnap.empty) {
-        // First pass: Find all invalid packages (0 games) to delete
         for (const doc of paymentsSnap.docs) {
           const data = doc.data();
-          if (
-            data.userEmail === correctEmail &&
-            typeof data.package === "string"
-          ) {
-            const numberMatch = data.package.match(/\d+/);
-            if (numberMatch) {
-              const packageNumber = parseInt(numberMatch[0], 10);
-              if (packageNumber === 0) {
-                docsToDelete.push(doc.ref);
-              }
-            }
+          if (data.userEmail === correctEmail && typeof data.package === "string") {
+            const match = data.package.match(/\d+/);
+            if (match && parseInt(match[0], 10) === 0) docsToDelete.push(doc.ref);
           }
         }
+        if (docsToDelete.length > 0) await Promise.all(docsToDelete.map(d => deleteDoc(d)));
 
-        // Delete all invalid packages first
-        if (docsToDelete.length > 0) {
-          await Promise.all(docsToDelete.map((doc) => deleteDoc(doc)));
-        }
-
-        // Second pass: Check remaining valid packages
-        const updatedPaymentsSnap = await getDocs(paymentsQuery);
-        for (const doc of updatedPaymentsSnap.docs) {
+        const updatedSnap = await getDocs(paymentsQuery);
+        for (const doc of updatedSnap.docs) {
           const data = doc.data();
-          if (
-            data.userEmail === correctEmail &&
-            typeof data.package === "string"
-          ) {
-            const numberMatch = data.package.match(/\d+/);
-            if (numberMatch) {
-              const packageNumber = parseInt(numberMatch[0], 10);
-              if (packageNumber > 0) {
-                docToUpdate = doc.ref;
-                currentPackageValue = data.package;
-                hasValidPackage = true;
-                break;
-              }
+          if (data.userEmail === correctEmail && typeof data.package === "string") {
+            const match = data.package.match(/\d+/);
+            if (match && parseInt(match[0], 10) > 0) {
+              docToUpdate = doc.ref; currentPackageValue = data.package; hasValidPackage = true; break;
             }
           }
         }
       }
 
-      // Only allow game creation if valid package exists
-      if (!hasValidPackage) {
-        toast.error("Please buy a game package to continue creating");
-        router.push("/?showCards=true");
-        return;
-      }
+      if (!hasValidPackage) { toast.error("Please buy a game package first"); router.push("/?showCards=true"); return; }
 
-      // Create the game document (only reaches here if hasValidPackage)
-      const docRef = await addDoc(userGameCollection, {
-        ...gameData,
-        selectedCards,
-        createdAt: Timestamp.now(),
-      });
+      const docRef = await addDoc(userGameCollection, { ...gameData, selectedCards, createdAt: Timestamp.now() });
 
-      // Update package count (we know hasValidPackage is true here)
       if (docToUpdate && currentPackageValue) {
-        const numberMatch = currentPackageValue.match(/\d+/);
-        if (numberMatch) {
-          let packageNumber = parseInt(numberMatch[0], 10);
-          packageNumber--;
-          const updatedPackageValue = `${packageNumber} Games`;
-
-          await updateDoc(docToUpdate, {
-            package: updatedPackageValue,
-          });
+        const match = currentPackageValue.match(/\d+/);
+        if (match) {
+          await updateDoc(docToUpdate, { package: `${parseInt(match[0], 10) - 1} Games` });
         }
       }
 
-      toast.success("Game created successfully!");
+      toast.success("Game created! Let's play!");
       router.push(`/creategame?gameId=${docRef.id}`);
-    } catch (error) {
-      console.error("Error saving game info:", error);
-      toast.error("Something went wrong. Please try again.");
-    }
+    } catch { toast.error("Something went wrong. Please try again."); }
   };
 
   return (
     <>
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Outfit:wght@300;400;500;600;700&display=swap');
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: 'Outfit', sans-serif; background: #070709; color: #e8eaf0; }
+
+        .dash-root { min-height: 100vh; background: #070709; }
+
+        .setup-section {
+          max-width: 1100px;
+          margin: 0 auto;
+          padding: 4rem 2rem;
+        }
+
+        .setup-eyebrow {
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: #4f6ef7;
+          margin-bottom: 0.75rem;
+          text-align: center;
+        }
+
+        .setup-title {
+          font-family: 'Syne', sans-serif;
+          font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+          font-weight: 800;
+          letter-spacing: -0.03em;
+          line-height: 1.1;
+          text-align: center;
+          margin-bottom: 3rem;
+        }
+
+        .setup-title span { color: #4f6ef7; }
+
+        .players-grid {
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
+          gap: 2rem;
+          align-items: center;
+          margin-bottom: 3rem;
+        }
+
+        @media (max-width: 700px) {
+          .players-grid { grid-template-columns: 1fr; }
+          .vs-center { display: none; }
+        }
+
+        .input-section {}
+
+        .input-label {
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: #6b7280;
+          margin-bottom: 8px;
+          display: block;
+        }
+
+        .input-label.yellow { color: #f7c948; }
+        .input-label.blue { color: #4f6ef7; }
+
+        .player-input {
+          width: 100%;
+          padding: 15px 18px;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 14px;
+          font-size: 1.05rem;
+          font-family: 'Outfit', sans-serif;
+          color: #e8eaf0;
+          transition: all 0.2s;
+          outline: none;
+        }
+
+        .player-input:focus {
+          border-color: rgba(79,110,247,0.5);
+          background: rgba(79,110,247,0.04);
+          box-shadow: 0 0 0 3px rgba(79,110,247,0.1);
+        }
+
+        .player-input::placeholder { color: #374151; }
+        .player-input.yellow:focus { border-color: rgba(247,201,72,0.5); box-shadow: 0 0 0 3px rgba(247,201,72,0.08); }
+
+        .vs-center {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .vs-badge {
+          font-family: 'Syne', sans-serif;
+          font-size: 1.8rem;
+          font-weight: 800;
+          background: linear-gradient(135deg, #f7c948, #f75c4f);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .gamename-wrap {
+          max-width: 500px;
+          margin: 0 auto 3rem;
+          text-align: center;
+        }
+
+        .game-name-input {
+          width: 100%;
+          padding: 16px 20px;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 14px;
+          font-size: 1.1rem;
+          font-family: 'Outfit', sans-serif;
+          color: #e8eaf0;
+          text-align: center;
+          transition: all 0.2s;
+          outline: none;
+          letter-spacing: 0.02em;
+        }
+
+        .game-name-input:focus {
+          border-color: rgba(247,201,72,0.5);
+          background: rgba(247,201,72,0.03);
+          box-shadow: 0 0 0 3px rgba(247,201,72,0.08);
+        }
+
+        .game-name-input::placeholder { color: #374151; }
+
+        .categories-section {
+          padding: 3rem 2rem 2rem;
+          border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .cat-header {
+          max-width: 1100px;
+          margin: 0 auto 1.5rem;
+        }
+
+        .cat-info {
+          max-width: 1100px;
+          margin: 0 auto 2.5rem;
+        }
+
+        .cat-info-inner {
+          background: rgba(79,110,247,0.06);
+          border: 1px solid rgba(79,110,247,0.15);
+          border-radius: 16px;
+          padding: 20px 24px;
+          font-size: 0.95rem;
+          color: #9ca3af;
+          line-height: 1.7;
+        }
+
+        .cat-info-inner strong { color: #c7d2fe; }
+
+        .progress-indicator {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 1rem;
+        }
+
+        .progress-bar-bg {
+          flex: 1;
+          height: 4px;
+          background: rgba(255,255,255,0.06);
+          border-radius: 100px;
+          overflow: hidden;
+        }
+
+        .progress-bar-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #4f6ef7, #7c5cfc);
+          border-radius: 100px;
+          transition: width 0.3s ease;
+        }
+
+        .progress-count {
+          font-size: 12px;
+          font-weight: 700;
+          color: #4f6ef7;
+          min-width: 40px;
+          text-align: right;
+        }
+
+        .cards-grid {
+          max-width: 1100px;
+          margin: 0 auto;
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 16px;
+        }
+
+        @media (max-width: 1000px) { .cards-grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (max-width: 750px) { .cards-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 500px) { .cards-grid { grid-template-columns: repeat(2, 1fr); } }
+
+        .game-card {
+          background: #0f1117;
+          border: 1px solid rgba(255,255,255,0.06);
+          border-radius: 16px;
+          overflow: hidden;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          position: relative;
+        }
+
+        .game-card:hover:not(.disabled) {
+          transform: translateY(-3px);
+          border-color: rgba(255,255,255,0.12);
+        }
+
+        .game-card.selected {
+          border-color: #f7c948;
+          box-shadow: 0 0 0 1px #f7c948, 0 8px 30px rgba(247,201,72,0.15);
+        }
+
+        .game-card.disabled {
+          opacity: 0.35;
+          cursor: not-allowed;
+        }
+
+        .card-img {
+          width: 100%;
+          height: 120px;
+          object-fit: cover;
+          display: block;
+          margin: 0;
+          transition: transform 0.3s ease;
+        }
+
+        .game-card:hover:not(.disabled) .card-img { transform: scale(1.05); }
+
+        .card-img-wrap { overflow: hidden; position: relative; }
+
+        .selected-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(247,201,72,0.15);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .selected-check {
+          width: 28px; height: 28px;
+          background: #f7c948;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 14px;
+          font-weight: 700;
+          color: #000;
+        }
+
+        .card-name {
+          padding: 10px 12px;
+          font-size: 0.82rem;
+          font-weight: 600;
+          color: #9ca3af;
+          text-align: center;
+        }
+
+        .game-card.selected .card-name { color: #f7c948; }
+
+        .start-btn-wrap {
+          text-align: center;
+          padding: 3rem 2rem;
+          max-width: 1100px;
+          margin: 0 auto;
+        }
+
+        .start-btn {
+          padding: 16px 48px;
+          background: linear-gradient(135deg, #4f6ef7, #7c5cfc);
+          color: white;
+          border: none;
+          border-radius: 14px;
+          font-size: 1.1rem;
+          font-weight: 700;
+          font-family: 'Outfit', sans-serif;
+          cursor: pointer;
+          transition: all 0.2s;
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          letter-spacing: 0.01em;
+        }
+
+        .start-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 40px rgba(79,110,247,0.4);
+        }
+
+        .start-btn:active { transform: translateY(0); }
+
+        .tab-bar {
+          max-width: 1100px;
+          margin: 0 auto;
+          padding: 0 2rem;
+          display: flex;
+          gap: 4px;
+          border-bottom: 1px solid rgba(255,255,255,0.06);
+          margin-bottom: 2rem;
+        }
+
+        .tab-btn {
+          padding: 14px 20px;
+          font-size: 0.9rem;
+          font-weight: 600;
+          font-family: 'Outfit', sans-serif;
+          background: none;
+          border: none;
+          color: #6b7280;
+          cursor: pointer;
+          transition: color 0.2s;
+          border-bottom: 2px solid transparent;
+          margin-bottom: -1px;
+        }
+
+        .tab-btn.active { color: #4f6ef7; border-bottom-color: #4f6ef7; }
+        .tab-btn:hover:not(.active) { color: #9ca3af; }
+      `}</style>
+
       <Header />
-      <ToastContainer
-        position="top-center"
-        className="text-center font-semibold"
-      />
-      <div>
+      <ToastContainer position="top-center" />
+
+      <div className="dash-root">
         {showBroGame ? (
-          <div className="container mx-auto p-4 mt-5">
+          <div style={{ maxWidth: 1100, margin: '0 auto', padding: '2rem' }}>
             <BrowserGame
               onShowDashboard={() => setShowBroGame(false)}
               onShowBrowserGame={() => setShowBroGame(true)}
@@ -274,179 +483,110 @@ export default function Dashboard() {
           </div>
         ) : (
           <>
-            <div className="mt-10 flex flex-col items-center px-4 sm:px-6 lg:px-8">
-              {/* Heading */}
-              <h1 className="font-bold text-xl sm:text-2xl px-4 py-3 rounded-lg text-center">
-                <span className="text-blue-500 text-lg sm:text-xl px-2 border-2 p-2 border-x-0 border-yellow-500">
-                  Specify the information of the two players.
-                </span>
-              </h1>
+            <div className="setup-section">
+              <div className="setup-eyebrow">New Game Setup</div>
+              <h1 className="setup-title">Who's Playing<br/><span>Today?</span></h1>
 
-              {/* Game Name Input */}
-              <div className="mt-10 w-full max-w-xl">
-                <h2 className="text-yellow-500 font-semibold text-lg sm:text-xl mb-2">
-                  Your Game
-                </h2>
-                <div className="relative mb-5">
-                  <input
-                    type="text"
-                    name="gameName"
-                    id="gameName"
-                    required
-                    value={gameData.gameName}
-                    onChange={handleChange}
-                    className="peer w-full px-4 py-3 text-base sm:text-lg border-2 border-gray-400 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300 bg-white shadow-sm transition duration-300"
-                  />
-                  <label
-                    htmlFor="gameName"
-                    className={`absolute left-4 top-3 text-base sm:text-lg px-1 transition-all duration-200 bg-white
-        ${
-          gameData.gameName
-            ? "top-[-10px] text-sm text-blue-500 "
-            : "text-gray-500"
-        }`}
-                  >
-                    Enter Name
-                  </label>
-                </div>
+              <div className="gamename-wrap">
+                <label className="input-label" style={{ textAlign: 'center', color: '#f7c948' }}>Game Name</label>
+                <input
+                  className="game-name-input"
+                  type="text"
+                  name="gameName"
+                  value={gameData.gameName}
+                  onChange={handleChange}
+                  placeholder="Enter a name for this game..."
+                />
               </div>
 
-              {/* Players Section */}
-              <div className="mt-8 flex flex-col sm:flex-row items-center gap-6 w-full max-w-3xl">
-                {/* First Player Input */}
-                <div className="relative w-full max-w-xs sm:max-w-md">
-                  <h2 className="absolute bottom-16 mb-2 text-yellow-500 font-semibold text-lg sm:text-xl">
-                    First Player
-                  </h2>
+              <div className="players-grid">
+                <div className="input-section">
+                  <label className="input-label yellow">⚡ Player One</label>
                   <input
+                    className="player-input yellow"
                     type="text"
                     name="playerOne"
-                    id="playerOne"
-                    required
                     value={gameData.playerOne}
                     onChange={handleChange}
-                    className="peer w-full px-4 py-3 text-base sm:text-lg border-2 border-gray-400 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300 bg-white shadow-sm transition duration-300"
-                  />
-                  <label
-                    htmlFor="playerOne"
-                    className={`absolute left-4 top-3 text-base sm:text-lg px-1 transition-all duration-200 bg-white
-        ${
-          gameData.playerOne
-            ? "top-[-10px] text-sm text-blue-500 "
-            : "text-gray-500"
-        }`}
-                  >
-                    Enter Name
-                  </label>
-                </div>
-
-                {/* VS Image */}
-                <div
-                  className="relative w-16 h-16 sm:w-36 sm:h-18 flex items-center justify-center rounded-full shadow-lg bg-cover bg-center mb-5 sm:mb-0"
-                  style={{ backgroundImage: `url(${ftvs.src})` }}
-                >
-                  <Image
-                    src={bgvs}
-                    alt="VS Icon"
-                    width={100}
-                    height={100}
-                    className="rounded-full mt-0 z-10"
+                    placeholder="First player's name..."
                   />
                 </div>
 
-                {/* Second Player Input */}
-                <div className="relative w-full max-w-xs sm:max-w-md">
-                  <h2 className="absolute bottom-16 mb-2 text-yellow-500 font-semibold text-lg sm:text-xl">
-                    Second Player
-                  </h2>
+                <div className="vs-center">
+                  <div className="vs-badge">VS</div>
+                </div>
+
+                <div className="input-section">
+                  <label className="input-label blue">🎯 Player Two</label>
                   <input
+                    className="player-input"
                     type="text"
                     name="playerTwo"
-                    id="playerTwo"
-                    required
                     value={gameData.playerTwo}
                     onChange={handleChange}
-                    className="peer w-full px-4 py-3 text-base sm:text-lg border-2 border-gray-400 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300 bg-white shadow-sm transition duration-300"
+                    placeholder="Second player's name..."
                   />
-                  <label
-                    htmlFor="playerTwo"
-                    className={`absolute left-4 top-3 text-base sm:text-lg px-1 transition-all duration-200 bg-white
-        ${
-          gameData.playerTwo
-            ? "top-[-10px] text-sm text-blue-500 "
-            : "text-gray-500"
-        }`}
-                  >
-                    Enter Name
-                  </label>
                 </div>
               </div>
             </div>
 
-            <div className="mt-10 ">
-              <div className="font-bold text-2xl px-6 py-3 text-center rounded-lg ">
-                <span className="text-blue-500 text-2xl px-2 border-2 p-2 border-x-0 border-yellow-500">
-                  Choose 6 categories
-                </span>
-              </div>
-              <div className="mt-3">
-                <h2 className="md:px-10 px-5 mt-5 text-center font-normal text-2xl text-gray-700">
-                  3 categories for first player and 3 categories for second
-                  player , for a total of 6 categories with 36 different
-                  questions. Choose the categories carefully to maximize your
-                  chances of winning. <br />
-                  <span className="font-semibold text-yellow-500 text-3xl">
-                    Temporary categories
-                  </span>{" "}
-                  <br />A limited number of games are available from them!
+            <div className="categories-section">
+              <div className="cat-header">
+                <div className="setup-eyebrow" style={{ textAlign: 'left' }}>Step 2 of 2</div>
+                <h2 style={{ fontFamily: 'Syne, sans-serif', fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>
+                  Choose Your <span style={{ color: '#4f6ef7' }}>6 Categories</span>
                 </h2>
-              </div>
-            </div>
-            <div className="min-h-screen bg-gray-100 py-10">
-              <div className="container mx-auto px-4">
-                <div className="font-bold text-2xl px-6 py-3 text-center rounded-lg ">
-                  <span className="text-blue-500 text-2xl px-2 border-2 p-2 border-x-0 border-yellow-500">
-                    Selete Game
-                  </span>
-                </div>{" "}
-                <div className="grid h-full cursor-pointer mt-10 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {cards.map((card, index) => {
-                    const isSelected = selectedCards.some(
-                      (selected) => selected.title === card.title
-                    );
-                    const isDisabled = selectedCards.length >= 6 && !isSelected;
-
-                    return (
-                      <div
-                        key={index}
-                        className={`bg-white shadow-lg rounded-lg overflow-hidden transition-transform transform hover:scale-105 hover:shadow-xl ${
-                          isDisabled ? "opacity-50 cursor-not-allowed" : ""
-                        } ${isSelected ? "border-4 border-yellow-500" : ""}`}
-                        onClick={() => handleSelectCard(card)}
-                      >
-                        <img
-                          src={card.image.src}
-                          alt={card.title}
-                          className="w-full h-56 object-cover mt-0"
-                        />
-                        <div className="p-4 text-center">
-                          <h2 className="text-xl text-blue-500 font-semibold mb-2">
-                            {card.title}
-                          </h2>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="progress-indicator">
+                  <div className="progress-bar-bg">
+                    <div className="progress-bar-fill" style={{ width: `${(selectedCards.length / 6) * 100}%` }} />
+                  </div>
+                  <div className="progress-count">{selectedCards.length}/6</div>
                 </div>
               </div>
-              <div className="mt-[3.25rem] text-center">
-                <button
-                  onClick={handleSubmit}
-                  className="text-white text-lg font-semibold shadow-xl w-56 h-12 bg-blue-600 opacity-90 hover:opacity-100 transition-opacity p-[2px] hover:bg-blue-700 px-3 py-1 rounded-md bg-gradient-to-t from-blue-600 to-blue-500 active:scale-95"
-                >
-                  Start playing now
-                </button>
+
+              <div className="cat-info">
+                <div className="cat-info-inner">
+                  Each player gets <strong>3 categories</strong> — choose wisely! Each category has <strong>6 questions</strong> per player, for a total of <strong>36 unique questions</strong>. Pick your strongest categories to maximize your winning chances.
+                </div>
               </div>
+
+              <div className="cards-grid">
+                {cards.map((card, i) => {
+                  const isSelected = selectedCards.some(s => s.title === card.title);
+                  const isDisabled = selectedCards.length >= 6 && !isSelected;
+                  return (
+                    <div
+                      key={i}
+                      className={`game-card${isSelected ? ' selected' : ''}${isDisabled ? ' disabled' : ''}`}
+                      onClick={() => !isDisabled && handleSelectCard(card)}
+                    >
+                      <div className="card-img-wrap">
+                        <img src={card.image.src} alt={card.title} className="card-img" />
+                        {isSelected && (
+                          <div className="selected-overlay">
+                            <div className="selected-check">✓</div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="card-name">{card.title}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="start-btn-wrap">
+              <button className="start-btn" onClick={handleSubmit}>
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 3l14 9-14 9V3z"/>
+                </svg>
+                Launch Game
+              </button>
+              {selectedCards.length > 0 && selectedCards.length < 6 && (
+                <p style={{ marginTop: '1rem', color: '#6b7280', fontSize: '0.9rem' }}>
+                  {6 - selectedCards.length} more {6 - selectedCards.length === 1 ? 'category' : 'categories'} needed
+                </p>
+              )}
             </div>
           </>
         )}

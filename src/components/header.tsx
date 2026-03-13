@@ -3,239 +3,412 @@ import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import logo from "../../public/images/logo.png";
-import { FaBars } from "react-icons/fa6";
-import { RxCross2 } from "react-icons/rx";
 import { auth, db } from "../firebase/firebaseConfig";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { toast, ToastContainer } from "react-toastify";
 
 export default function Header() {
-  interface UserName {
-    firstName: string;
-    lastName: string;
-  }
-
+  interface UserName { firstName: string; lastName: string; }
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDropOpen, setIsDropOpen] = useState(false);
   const [userName, setUserName] = useState<UserName | null>(null);
   const [loading, setLoading] = useState(true);
+  const [scrolled, setScrolled] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        try {
-          const userDoc = await getDoc(doc(db, "users", user.uid));
-          if (userDoc.exists()) {
-            setUserName(userDoc.data() as UserName);
-          } else {
-            console.error("No user data found!");
-          }
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-        }
-      } else {
-        setUserName(null);
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const doc_ = await getDoc(doc(db, "users", user.uid));
+          if (doc_.exists()) setUserName(doc_.data() as UserName);
+        } catch {}
+      } else setUserName(null);
+      setLoading(false);
+    });
+    return () => unsub();
+  }, []);
 
   const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      setUserName(null);
-      router.push("/login");
-      toast.success("Logout Successfully");
-    } catch (error) {
-      console.error("Error logging out:", error);
-    }
+    await signOut(auth);
+    setUserName(null);
+    router.push("/login");
+    toast.success("Logged out successfully");
   };
 
-  const handleNavigation = (path: string, requireLogin: boolean = false) => {
-    if (requireLogin && !userName) {
-      router.push("/login");
-    } else {
-      router.push(path);
-    }
+  const nav = (path: string, requireLogin = false) => {
+    setIsMenuOpen(false);
+    if (requireLogin && !userName) router.push("/login");
+    else router.push(path);
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-lg font-semibold">Loading...</p>
-      </div>
-    );
-  }
 
   return (
     <>
-                <ToastContainer
-                  position="top-center"
-                  className="text-center font-semibold"
-                />
-    
-    <nav className="bg-white border-gray-200 dark:bg-gray-800 w-full">
-      <div className="max-w-screen-xl h-[5.5rem] flex items-center justify-between mx-auto p-2 relative">
-        {/* Logo Section */}
-        <div className="flex items-center">
-          <Image
-            src={logo}
-            onClick={() => router.push("/")}
-            className="h-10 w-[50px] mt-0 cursor-pointer"
-            alt="Logo"
-          />
-          <div className="absolute left-1/2 md:left-[125px] transform -translate-x-1/2">
-            <span className="text-2xl font-semibold dark:text-white">
-              IQPLAY
-            </span>
-          </div>{" "}
-        </div>
+      <style jsx>{`
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Outfit:wght@400;500;600&display=swap');
 
-        {/* Desktop Menu */}
-        <div className="hidden md:flex flex-grow justify-center md:font-semibold">
-          <ul className="flex flex-row space-x-8">
-            <li>
-              <a
-                onClick={() => handleNavigation("/dashboard", true)}
-                className="cursor-pointer text-gray-900 dark:text-white hover:text-blue-700 dark:hover:text-gray-400"
-              >
-                My Playtime
-              </a>
-            </li>{" "}
-            <li>
-              <a
-                onClick={() => handleNavigation("/contact")}
-                className="cursor-pointer text-gray-900 dark:text-white hover:text-blue-700 dark:hover:text-gray-400"
-              >
-                Contact Support
-              </a>
-            </li>
+        .nav-root {
+          position: sticky;
+          top: 0;
+          z-index: 100;
+          transition: all 0.3s ease;
+          font-family: 'Outfit', sans-serif;
+        }
+
+        .nav-root.scrolled {
+          background: rgba(10,10,15,0.9);
+          backdrop-filter: blur(20px);
+          border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .nav-root:not(.scrolled) {
+          background: #0a0a0f;
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .nav-inner {
+          max-width: 1300px;
+          margin: 0 auto;
+          padding: 0 2rem;
+          height: 72px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 2rem;
+        }
+
+        .nav-logo {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          cursor: pointer;
+          text-decoration: none;
+        }
+
+        .logo-img-wrap {
+          width: 36px; height: 36px;
+          border-radius: 10px;
+          overflow: hidden;
+          border: 1px solid rgba(255,255,255,0.1);
+          flex-shrink: 0;
+        }
+
+        .logo-name {
+          font-family: 'Syne', sans-serif;
+          font-size: 1.3rem;
+          font-weight: 800;
+          color: #fff;
+          letter-spacing: -0.02em;
+        }
+
+        .logo-name span { color: #4f6ef7; }
+
+        .nav-links {
+          display: flex;
+          align-items: center;
+          gap: 32px;
+          list-style: none;
+          margin: 0; padding: 0;
+        }
+
+        .nav-link {
+          font-size: 0.9rem;
+          font-weight: 500;
+          color: #9ca3af;
+          cursor: pointer;
+          transition: color 0.2s;
+          letter-spacing: 0.01em;
+        }
+
+        .nav-link:hover { color: #fff; }
+
+        .nav-right { display: flex; align-items: center; gap: 12px; }
+
+        .avatar-btn {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 8px 16px;
+          background: rgba(79,110,247,0.1);
+          border: 1px solid rgba(79,110,247,0.25);
+          border-radius: 100px;
+          cursor: pointer;
+          transition: all 0.2s;
+          color: #c7d2fe;
+          font-size: 0.9rem;
+          font-weight: 500;
+        }
+
+        .avatar-btn:hover {
+          background: rgba(79,110,247,0.18);
+          border-color: rgba(79,110,247,0.5);
+        }
+
+        .avatar-circle {
+          width: 28px; height: 28px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #4f6ef7, #7c5cfc);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+          font-weight: 700;
+          color: white;
+          flex-shrink: 0;
+        }
+
+        .chevron {
+          width: 14px; height: 14px;
+          transition: transform 0.2s;
+          opacity: 0.6;
+        }
+
+        .chevron.open { transform: rotate(180deg); }
+
+        .dropdown {
+          position: absolute;
+          top: calc(100% + 8px);
+          right: 0;
+          background: #161b27;
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 14px;
+          padding: 6px;
+          min-width: 180px;
+          box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+          animation: dropIn 0.15s ease;
+        }
+
+        @keyframes dropIn {
+          from { opacity: 0; transform: translateY(-8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .drop-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 14px;
+          border-radius: 10px;
+          font-size: 0.9rem;
+          font-weight: 500;
+          color: #d1d5db;
+          cursor: pointer;
+          transition: all 0.15s;
+          text-decoration: none;
+          width: 100%;
+          text-align: left;
+          background: none;
+          border: none;
+          font-family: 'Outfit', sans-serif;
+        }
+
+        .drop-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+        .drop-item.danger:hover { background: rgba(239,68,68,0.08); color: #f87171; }
+
+        .drop-sep {
+          height: 1px;
+          background: rgba(255,255,255,0.06);
+          margin: 4px 0;
+        }
+
+        .login-btn {
+          padding: 9px 22px;
+          background: #4f6ef7;
+          color: white;
+          border: none;
+          border-radius: 10px;
+          font-size: 0.9rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          font-family: 'Outfit', sans-serif;
+        }
+
+        .login-btn:hover {
+          background: #3d58e0;
+          transform: translateY(-1px);
+          box-shadow: 0 6px 20px rgba(79,110,247,0.35);
+        }
+
+        .mobile-toggle {
+          display: none;
+          align-items: center;
+          justify-content: center;
+          width: 38px; height: 38px;
+          border-radius: 10px;
+          background: rgba(255,255,255,0.06);
+          border: 1px solid rgba(255,255,255,0.08);
+          cursor: pointer;
+          color: #fff;
+          transition: background 0.2s;
+        }
+
+        .mobile-toggle:hover { background: rgba(255,255,255,0.1); }
+
+        @media (max-width: 768px) {
+          .nav-links { display: none; }
+          .nav-right .avatar-btn span { display: none; }
+          .mobile-toggle { display: flex; }
+        }
+
+        .mobile-menu {
+          position: fixed;
+          top: 0; left: 0; bottom: 0;
+          width: 280px;
+          background: #0f1117;
+          border-right: 1px solid rgba(255,255,255,0.06);
+          z-index: 200;
+          padding: 24px;
+          transform: translateX(-100%);
+          transition: transform 0.3s ease;
+        }
+
+        .mobile-menu.open { transform: translateX(0); }
+
+        .mobile-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.6);
+          z-index: 199;
+          backdrop-filter: blur(4px);
+        }
+
+        .mobile-close {
+          position: absolute;
+          top: 20px; right: 20px;
+          width: 36px; height: 36px;
+          display: flex; align-items: center; justify-content: center;
+          background: rgba(255,255,255,0.06);
+          border-radius: 8px;
+          cursor: pointer;
+          color: #fff;
+          border: none;
+        }
+
+        .mobile-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
+
+        .mobile-nav-link {
+          display: block;
+          padding: 12px 16px;
+          border-radius: 10px;
+          color: #9ca3af;
+          font-size: 0.95rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.15s;
+          margin-bottom: 4px;
+        }
+
+        .mobile-nav-link:hover { background: rgba(255,255,255,0.05); color: #fff; }
+
+        .mobile-actions { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 10px; }
+
+        .mobile-btn {
+          width: 100%;
+          padding: 12px;
+          border-radius: 10px;
+          font-size: 0.95rem;
+          font-weight: 600;
+          cursor: pointer;
+          border: none;
+          font-family: 'Outfit', sans-serif;
+        }
+
+        .avatar-relative { position: relative; }
+      `}</style>
+      <ToastContainer position="top-center" />
+
+      <nav className={`nav-root${scrolled ? ' scrolled' : ''}`}>
+        <div className="nav-inner">
+          <div className="nav-logo" onClick={() => router.push("/")}>
+            <div className="logo-img-wrap">
+              <Image src={logo} alt="IQPLAY" width={36} height={36} style={{ margin: 0 }} />
+            </div>
+            <span className="logo-name">IQ<span>PLAY</span></span>
+          </div>
+
+          <ul className="nav-links">
+            <li className="nav-link" onClick={() => nav("/dashboard", true)}>My Playtime</li>
+            <li className="nav-link" onClick={() => nav("/contact")}>Contact Support</li>
+            <li className="nav-link" onClick={() => nav("/?showCards=true")}>Buy Games</li>
           </ul>
-        </div>
 
-        {/* User Profile / Login Button */}
-        {userName ? (
-          <div className="relative hidden md:flex">
-            <button
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600"
-              onClick={toggleMenu}
-            >
-              <span>
-                {userName.firstName} {userName.lastName}
-              </span>
-              {isMenuOpen ? <RxCross2 /> : <FaBars />}
-            </button>
-
-            {isMenuOpen && (
-              <div className="absolute right-0 mt-9 w-48 bg-white hover:rounded-lg rounded-lg shadow-lg z-50">
-                <ul>
-                  <li>
-                    <a
-                      href="/profile"
-                      className="block px-4 py-2 text-gray-700 hover:text-green-500 font-semibold hover:bg-gray-100"
-                    >
-                      Profile
-                    </a>
-                  </li>
-                  <li>
-                    <button
-                      onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 hover:text-red-500 font-semibold text-gray-700 hover:bg-gray-100"
-                    >
-                      Logout
-                    </button>
-                  </li>
-                </ul>
-              </div>
+          <div className="nav-right">
+            {!loading && (
+              userName ? (
+                <div className="avatar-relative">
+                  <button className="avatar-btn" onClick={() => setIsDropOpen(!isDropOpen)}>
+                    <div className="avatar-circle">{userName.firstName[0]}</div>
+                    <span>{userName.firstName} {userName.lastName}</span>
+                    <svg className={`chevron${isDropOpen ? ' open' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+                  {isDropOpen && (
+                    <div className="dropdown">
+                      <a href="/profile" className="drop-item">
+                        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                        Profile
+                      </a>
+                      <div className="drop-sep" />
+                      <button className="drop-item danger" onClick={handleLogout}>
+                        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button className="login-btn" onClick={() => router.push("/login")}>Login</button>
+              )
             )}
-          </div>
-        ) : (
-          <div className="hidden md:block">
-            <button
-              onClick={() => router.push("/login")}
-              className="text-white bg-gradient-to-r from-blue-500 to-blue-700 px-5 py-2.5 rounded-lg font-semibold hover:bg-blue-600"
-            >
-              Login
+            <button className="mobile-toggle" onClick={() => setIsMenuOpen(true)}>
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+              </svg>
             </button>
           </div>
-        )}
-
-        {/* Mobile Menu Button */}
-        <div className="md:hidden">
-          <button
-            onClick={toggleMenu}
-            className="text-gray-900 dark:text-white text-2xl"
-          >
-            {isMenuOpen ? <RxCross2 /> : <FaBars />}
-          </button>
         </div>
-      </div>
+      </nav>
 
-      {/* Mobile Menu */}
-      <div
-        className={`md:hidden fixed top-0 left-0 h-full w-64 bg-gray-800 text-white z-50 transform ${
-          isMenuOpen ? "translate-x-0" : "-translate-x-full"
-        } transition-transform duration-300 shadow-lg`}
-      >
-        <button
-          className="absolute top-4 right-4 text-white text-2xl"
-          onClick={toggleMenu}
-        >
-          <RxCross2 />
+      {isMenuOpen && <div className="mobile-overlay" onClick={() => setIsMenuOpen(false)} />}
+      <div className={`mobile-menu${isMenuOpen ? ' open' : ''}`}>
+        <button className="mobile-close" onClick={() => setIsMenuOpen(false)}>
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
         </button>
-
-        <div className="flex flex-col items-start p-5 space-y-4">
-          <Image
-            src={logo}
-            onClick={() => router.push("/")}
-            className="h-12 w-[60px] mb-4 mt-0"
-            alt="Logo"
-          />
-          <a
-            onClick={() => handleNavigation("/dashboard", true)}
-            className="cursor-pointer text-lg hover:text-blue-400"
-          >
-            My Playtime
-          </a>
-          <a
-            onClick={() => handleNavigation("/contact")}
-            className="cursor-pointer text-lg hover:text-blue-400"
-          >
-            Contact Support
-          </a>
+        <div className="mobile-logo">
+          <div className="logo-img-wrap">
+            <Image src={logo} alt="IQPLAY" width={36} height={36} style={{ margin: 0 }} />
+          </div>
+          <span className="logo-name">IQ<span>PLAY</span></span>
+        </div>
+        <div className="mobile-nav-link" onClick={() => nav("/dashboard", true)}>My Playtime</div>
+        <div className="mobile-nav-link" onClick={() => nav("/contact")}>Contact Support</div>
+        <div className="mobile-nav-link" onClick={() => nav("/?showCards=true")}>Buy Games</div>
+        <div className="mobile-actions">
           {userName ? (
             <>
-              <a
-                href="/profile"
-                className="text-lg bg-blue-500 p-2 text-white rounded-lg w-44 text-center"
-              >
-                Profile
-              </a>
-              <button
-                onClick={handleLogout}
-                className="text-lg bg-red-500 w-44 p-2 rounded-lg hover:text-red-400 text-center"
-              >
-                Logout
-              </button>
+              <button className="mobile-btn" style={{ background: 'rgba(79,110,247,0.15)', color: '#818cf8', border: '1px solid rgba(79,110,247,0.25)' }} onClick={() => nav("/profile")}>Profile</button>
+              <button className="mobile-btn" style={{ background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' }} onClick={handleLogout}>Logout</button>
             </>
           ) : (
-            <button
-              onClick={() => router.push("/login")}
-              className="text-lg bg-blue-500 p-2 text-white rounded-lg w-40 "
-            >
-              Login
-            </button>
+            <button className="mobile-btn" style={{ background: '#4f6ef7', color: 'white' }} onClick={() => nav("/login")}>Login</button>
           )}
         </div>
       </div>
-    </nav>
     </>
   );
 }
