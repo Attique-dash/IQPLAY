@@ -419,7 +419,7 @@ export default function Quiz() {
                   <FaGamepad className="text-white text-lg" />
                 </div>
               </div>
-              <span className="font-display font-bold text-lg bg-gradient-to-r from-white to-[#94a3b8] bg-clip-text text-transparent hidden sm:block">BRAIN<span className="text-[#7c3aed]">ARENA</span></span>
+              <span className="font-display font-bold text-lg bg-gradient-to-r from-white to-[#94a3b8] bg-clip-text text-transparent hidden sm:block">IQ<span className="text-[#7c3aed]">PLAY</span></span>
             </div>
 
             <h1 className="font-display font-bold text-base sm:text-lg text-white/80 max-w-[200px] sm:max-w-md truncate">

@@ -75,7 +75,7 @@ export default function Footer() {
                   </div>
                 </div>
                 <span className="font-display font-bold text-xl bg-gradient-to-r from-[var(--text)] to-[var(--text2)] bg-clip-text text-transparent">
-                  BRAIN<span className="text-[var(--accent)]">ARENA</span>
+                  IQ<span className="text-[var(--accent)]">PLAY</span>
                 </span>
               </motion.div>
               

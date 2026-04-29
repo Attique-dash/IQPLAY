@@ -113,7 +113,7 @@ export default function Header() {
                 </div>
               </div>
               <span className="font-display font-bold text-xl bg-gradient-to-r from-[var(--text)] to-[var(--text2)] bg-clip-text text-transparent">
-                BRAIN<span className="text-[#7c3aed]">ARENA</span>
+                IQ<span className="text-[var(--accent)]">PLAY</span>
               </span>
             </motion.div>
 
@@ -266,7 +266,7 @@ export default function Header() {
                       <FaGamepad className="text-white" />
                     </div>
                     <span className="font-display font-bold text-lg bg-gradient-to-r from-[var(--text)] to-[var(--text2)] bg-clip-text text-transparent">
-                      BRAIN<span className="text-[#7c3aed]">ARENA</span>
+                      IQ<span className="text-[var(--accent)]">PLAY</span>
                     </span>
                   </div>
                   <button

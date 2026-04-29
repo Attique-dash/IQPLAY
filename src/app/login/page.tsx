@@ -117,7 +117,7 @@ export default function Login() {
                       </div>
                     </div>
                     <span className="font-display font-bold text-2xl bg-gradient-to-r from-white to-[#94a3b8] bg-clip-text text-transparent">
-                      BRAIN<span className="text-[#7c3aed]">ARENA</span>
+                      IQ<span className="text-[#7c3aed]">PLAY</span>
                     </span>
                   </div>
 
