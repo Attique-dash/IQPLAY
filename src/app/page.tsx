@@ -6,19 +6,17 @@ import Header from "@/components/header";
 import { useRouter, usePathname } from "next/navigation";
 import Footer from "@/components/footer";
 import coll from "../../public/images/collgame.png";
+import { motion, AnimatePresence } from "framer-motion";
+import { FaGamepad, FaTrophy, FaBolt, FaStar, FaArrowRight, FaCheckCircle, FaFire, FaUsers, FaClock } from "react-icons/fa";
+import { GiSwordClash, GiCrown, GiBrain, GiBattleAxe } from "react-icons/gi";
 
 export default function Home() {
   const [userId, setUserId] = useState<string | null>(null);
-  const [currentImage, setCurrentImage] = useState(0);
   const [showCardsOnly, setShowCardsOnly] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
-  const categories = ["Sports", "Mobile", "Board", "Strategy"];
-
   useEffect(() => {
-    setMounted(true);
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       setShowCardsOnly(params.get("showCards") === "true");
@@ -26,28 +24,21 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
+    const unsub = auth.onAuthStateChanged((user) => {
       if (user) setUserId(user.uid);
       else {
         setUserId(null);
         if (pathname !== "/") router.push("/login");
       }
     });
-    return () => unsubscribe();
+    return () => unsub();
   }, [pathname, router]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImage((prev) => (prev + 1) % categories.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
   const Games = [
-    { rs: "300 Rs", info: "Perfect starter pack for new challengers", pac: "2 Games", popular: false },
-    { rs: "500 Rs", info: "Most popular choice for regular players", pac: "5 Games", popular: true },
-    { rs: "800 Rs", info: "Level up your game collection", pac: "10 Games", popular: false },
-    { rs: "1200 Rs", info: "Ultimate bundle for hardcore champions", pac: "15 Games", popular: false },
+    { rs: "299 PKR", info: "Perfect for newcomers", pac: "2 Games", popular: false },
+    { rs: "499 PKR", info: "Most popular choice", pac: "5 Games", popular: true },
+    { rs: "799 PKR", info: "Best value bundle", pac: "10 Games", popular: false },
+    { rs: "1199 PKR", info: "Ultimate champion pack", pac: "15 Games", popular: false },
   ];
 
   const handleNavigation = (path: string) => {
@@ -56,845 +47,375 @@ export default function Home() {
   };
 
   const BuyGame = (game: { rs: string; pac: string }) => {
-    if (userId) {
-      router.push(`/buygame?rs=${encodeURIComponent(game.rs)}&pac=${encodeURIComponent(game.pac)}&userId=${userId}`);
-    } else {
-      router.push("/login");
-    }
+    if (userId) router.push(`/buygame?rs=${encodeURIComponent(game.rs)}&pac=${encodeURIComponent(game.pac)}&userId=${userId}`);
+    else router.push("/login");
   };
 
+  const features = [
+    { icon: <FaGamepad />, bg: "rgba(124,58,237,0.15)", title: "Design Your Game", desc: "Pick 6 categories from 20+ options. Mix sports, gaming, and more for the perfect challenge." },
+    { icon: <GiSwordClash />, bg: "rgba(245,158,11,0.15)", title: "Battle Head-to-Head", desc: "Two players compete across 36 unique questions. Strategy meets knowledge." },
+    { icon: <GiCrown />, bg: "rgba(16,185,129,0.15)", title: "Claim Victory", desc: "Earn points based on accuracy and speed. Prove you're the champion." },
+  ];
+
   return (
-    <>
+    <div className="min-h-screen bg-[var(--bg)]">
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Outfit:wght@300;400;500;600;700&display=swap');
-
-        :root {
-          --ink: #0a0a0f;
-          --surface: #0f1117;
-          --card: #161b27;
-          --border: rgba(255,255,255,0.07);
-          --accent: #4f6ef7;
-          --accent2: #f7c948;
-          --accent3: #f75c4f;
-          --text: #e8eaf0;
-          --muted: #6b7280;
-          --glow: rgba(79, 110, 247, 0.15);
-        }
-
-        * { box-sizing: border-box; }
-        body { background: var(--ink) !important; font-family: 'Outfit', sans-serif; color: var(--text); }
-
-        .hero-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 4rem;
-          align-items: center;
-          min-height: 85vh;
-          padding: 4rem 6rem;
-        }
-
-        @media (max-width: 900px) {
-          .hero-grid { grid-template-columns: 1fr; padding: 3rem 2rem; min-height: auto; gap: 2rem; }
-          .hero-visual { display: none; }
-        }
-
-        .hero-eyebrow {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 6px 16px;
-          background: rgba(79,110,247,0.12);
-          border: 1px solid rgba(79,110,247,0.3);
-          border-radius: 100px;
-          font-size: 13px;
-          font-weight: 500;
-          color: #7d9aff;
-          letter-spacing: 0.05em;
-          text-transform: uppercase;
-          margin-bottom: 1.5rem;
-        }
-
-        .hero-eyebrow::before {
-          content: '';
-          width: 6px; height: 6px;
-          background: #4f6ef7;
-          border-radius: 50%;
-          box-shadow: 0 0 8px #4f6ef7;
-          animation: blink 1.5s ease infinite;
-        }
-
-        @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
-
-        .hero-title {
-          font-family: 'Syne', sans-serif;
-          font-size: clamp(2.8rem, 5vw, 4.5rem);
-          font-weight: 800;
-          line-height: 1.05;
-          margin-bottom: 1.5rem;
-          letter-spacing: -0.03em;
-        }
-
-        .hero-title .line-accent { color: var(--accent); }
-        .hero-title .line-gold { color: var(--accent2); }
-
-        .hero-desc {
-          font-size: 1.15rem;
-          line-height: 1.7;
-          color: var(--muted);
-          margin-bottom: 2.5rem;
-          max-width: 480px;
-        }
-
-        .btn-primary {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          padding: 14px 28px;
-          background: var(--accent);
-          color: white;
-          border: none;
-          border-radius: 12px;
-          font-family: 'Outfit', sans-serif;
-          font-size: 1rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          box-shadow: 0 0 0 0 rgba(79,110,247,0.4);
-        }
-
-        .btn-primary:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 30px rgba(79,110,247,0.4);
-        }
-
-        .btn-secondary {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          padding: 14px 28px;
-          background: transparent;
-          color: var(--text);
-          border: 1px solid var(--border);
-          border-radius: 12px;
-          font-family: 'Outfit', sans-serif;
-          font-size: 1rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .btn-secondary:hover {
-          background: rgba(255,255,255,0.05);
-          border-color: rgba(255,255,255,0.15);
-        }
-
-        .hero-visual {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 16px;
-          position: relative;
-        }
-
-        .video-card {
-          border-radius: 20px;
-          overflow: hidden;
-          border: 1px solid var(--border);
-          position: relative;
-          background: var(--card);
-          transition: transform 0.3s ease;
-        }
-
-        .video-card:hover { transform: translateY(-4px); }
-        .video-card:nth-child(1) { margin-top: 30px; }
-        .video-card:nth-child(4) { margin-top: 30px; }
-
-        .video-card video { width: 100%; height: 160px; object-fit: cover; display: block; }
-
-        .video-label {
-          position: absolute;
-          bottom: 10px;
-          left: 12px;
-          font-size: 12px;
-          font-weight: 600;
-          color: white;
-          background: rgba(0,0,0,0.6);
-          backdrop-filter: blur(8px);
-          padding: 4px 10px;
-          border-radius: 20px;
-        }
-
-        .section-container {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 0 2rem;
-        }
-
-        .section-tag {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 12px;
-          font-weight: 700;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: var(--accent);
-          margin-bottom: 1rem;
-        }
-
-        .section-tag::after {
-          content: '';
-          width: 40px;
-          height: 1px;
-          background: var(--accent);
-          opacity: 0.4;
-        }
-
-        .feature-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 24px;
-          margin-top: 3rem;
-        }
-
-        @media (max-width: 768px) {
-          .feature-grid { grid-template-columns: 1fr; }
-        }
-
-        .feature-card {
-          background: var(--card);
-          border: 1px solid var(--border);
-          border-radius: 20px;
-          padding: 28px;
-          transition: all 0.3s ease;
-          position: relative;
-          overflow: hidden;
-        }
-
-        .feature-card::before {
-          content: '';
-          position: absolute;
-          top: 0; left: 0; right: 0;
-          height: 2px;
-          background: linear-gradient(90deg, var(--accent), transparent);
-          opacity: 0;
-          transition: opacity 0.3s;
-        }
-
-        .feature-card:hover::before { opacity: 1; }
-        .feature-card:hover { border-color: rgba(79,110,247,0.2); transform: translateY(-4px); }
-
-        .feature-icon {
-          width: 52px; height: 52px;
-          border-radius: 14px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 24px;
-          margin-bottom: 1rem;
-        }
-
-        .feature-title {
-          font-family: 'Syne', sans-serif;
-          font-size: 1.15rem;
-          font-weight: 700;
-          margin-bottom: 0.5rem;
-        }
-
-        .feature-desc { font-size: 0.9rem; color: var(--muted); line-height: 1.6; }
-
-        .packages-section {
-          padding: 6rem 2rem;
-          background: linear-gradient(180deg, var(--ink) 0%, var(--surface) 50%, var(--ink) 100%);
-          position: relative;
-        }
-
-        .packages-section::before {
-          content: '';
-          position: absolute;
-          top: 0; left: 50%; transform: translateX(-50%);
-          width: 600px; height: 600px;
-          background: radial-gradient(ellipse, rgba(79,110,247,0.06) 0%, transparent 70%);
-          pointer-events: none;
-        }
-
-        .packages-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 20px;
-          margin-top: 3rem;
-        }
-
-        @media (max-width: 1000px) {
-          .packages-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-
-        @media (max-width: 600px) {
-          .packages-grid { grid-template-columns: 1fr; }
-        }
-
-        .package-card {
-          background: var(--card);
-          border: 1px solid var(--border);
-          border-radius: 24px;
-          overflow: hidden;
-          transition: all 0.3s ease;
-          position: relative;
-        }
-
-        .package-card:hover {
-          transform: translateY(-8px);
-          border-color: rgba(79,110,247,0.3);
-          box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-        }
-
-        .package-card.popular {
-          border-color: var(--accent);
-          box-shadow: 0 0 30px rgba(79,110,247,0.15);
-        }
-
-        .popular-badge {
-          position: absolute;
-          top: 14px;
-          right: 14px;
-          background: var(--accent);
-          color: white;
-          font-size: 11px;
-          font-weight: 700;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          padding: 4px 10px;
-          border-radius: 100px;
-        }
-
-        .package-img {
-          position: relative;
-          height: 180px;
-          overflow: hidden;
-        }
-
-        .package-img img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          filter: brightness(0.5) saturate(1.3);
-          margin: 0;
-          display: block;
-        }
-
-        .package-img-overlay {
-          position: absolute;
-          inset: 0;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%);
-        }
-
-        .package-count {
-          font-family: 'Syne', sans-serif;
-          font-size: 2.2rem;
-          font-weight: 800;
-          color: white;
-          line-height: 1;
-        }
-
-        .package-count span {
-          font-size: 1rem;
-          font-weight: 500;
-          opacity: 0.8;
-          display: block;
-          margin-top: 2px;
-        }
-
-        .package-body { padding: 20px; }
-
-        .package-price {
-          font-family: 'Syne', sans-serif;
-          font-size: 1.6rem;
-          font-weight: 800;
-          color: var(--accent2);
-          margin-bottom: 6px;
-        }
-
-        .package-desc { font-size: 0.85rem; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
-
-        .btn-buy {
-          width: 100%;
-          padding: 12px;
-          border-radius: 10px;
-          border: none;
-          font-family: 'Outfit', sans-serif;
-          font-size: 0.95rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-        }
-
-        .btn-buy-primary {
-          background: var(--accent);
-          color: white;
-        }
-
-        .btn-buy-primary:hover {
-          background: #3d58e0;
-          transform: translateY(-1px);
-        }
-
-        .btn-buy-secondary {
-          background: rgba(255,255,255,0.06);
-          color: var(--text);
-          border: 1px solid var(--border);
-        }
-
-        .btn-buy-secondary:hover {
-          background: rgba(255,255,255,0.1);
-        }
-
-        .divider-section {
-          padding: 6rem 2rem;
-        }
-
-        .stats-row {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 2px;
-          background: var(--border);
-          border-radius: 20px;
-          overflow: hidden;
-          margin-top: 3rem;
-        }
-
-        @media (max-width: 600px) {
-          .stats-row { grid-template-columns: 1fr; }
-        }
-
-        .stat-item {
-          background: var(--card);
-          padding: 2.5rem;
-          text-align: center;
-        }
-
-        .stat-num {
-          font-family: 'Syne', sans-serif;
-          font-size: 3rem;
-          font-weight: 800;
-          background: linear-gradient(135deg, var(--accent), #a78bfa);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          line-height: 1;
-          margin-bottom: 0.5rem;
-        }
-
-        .stat-label { font-size: 0.9rem; color: var(--muted); font-weight: 500; }
-
-        .section-heading {
-          font-family: 'Syne', sans-serif;
-          font-size: clamp(2rem, 3.5vw, 3rem);
-          font-weight: 800;
-          letter-spacing: -0.02em;
-          line-height: 1.15;
-          margin-bottom: 1rem;
-        }
-
-        .section-sub {
-          font-size: 1.05rem;
-          color: var(--muted);
-          max-width: 520px;
-          line-height: 1.7;
-        }
-
-        .hero-buttons { display: flex; gap: 12px; flex-wrap: wrap; }
-        .hero-section { background: var(--ink); position: relative; overflow: hidden; }
-        .hero-bg-glow {
-          position: absolute;
-          top: -200px; right: -200px;
-          width: 700px; height: 700px;
-          background: radial-gradient(ellipse, rgba(79,110,247,0.1) 0%, transparent 65%);
-          pointer-events: none;
-        }
-        .hero-bg-glow2 {
-          position: absolute;
-          bottom: -300px; left: -100px;
-          width: 500px; height: 500px;
-          background: radial-gradient(ellipse, rgba(247,201,72,0.06) 0%, transparent 65%);
-          pointer-events: none;
-        }
-
-        .mid-section {
-          padding: 6rem 2rem;
-          background: var(--surface);
-        }
-
-        .mid-inner {
-          max-width: 1100px;
-          margin: 0 auto;
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 5rem;
-          align-items: center;
-        }
-
-        @media (max-width: 800px) {
-          .mid-inner { grid-template-columns: 1fr; gap: 2rem; }
-          .mid-visual { display: none; }
-        }
-
-        .mid-visual {
-          position: relative;
-        }
-
-        .mid-visual-card {
-          background: var(--card);
-          border: 1px solid var(--border);
-          border-radius: 24px;
-          overflow: hidden;
-        }
-
-        .mid-visual-card video {
-          width: 100%;
-          height: 300px;
-          object-fit: cover;
-          display: block;
-          margin: 0;
-        }
-
-        .floating-badge {
-          position: absolute;
-          bottom: -16px; left: 30px;
-          background: var(--card);
-          border: 1px solid var(--border);
-          border-radius: 16px;
-          padding: 14px 20px;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          box-shadow: 0 20px 50px rgba(0,0,0,0.4);
-        }
-
-        .badge-icon {
-          width: 40px; height: 40px;
-          background: linear-gradient(135deg, var(--accent), #7c5cfc);
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 20px;
-        }
-
-        .badge-text .t1 { font-size: 0.8rem; color: var(--muted); }
-        .badge-text .t2 { font-size: 1rem; font-weight: 700; color: var(--text); }
-
-        .pill-tags {
-          display: flex;
-          gap: 10px;
-          flex-wrap: wrap;
-          margin-top: 1.5rem;
-        }
-
-        .pill {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          padding: 6px 14px;
-          border-radius: 100px;
-          border: 1px solid var(--border);
-          font-size: 0.85rem;
-          font-weight: 500;
-          color: var(--muted);
-          background: rgba(255,255,255,0.03);
-        }
-
-        .pill .dot { width: 6px; height: 6px; border-radius: 50%; }
-
-        .ticker {
-          background: var(--surface);
-          border-top: 1px solid var(--border);
-          border-bottom: 1px solid var(--border);
-          padding: 12px 0;
-          overflow: hidden;
-          white-space: nowrap;
-        }
-
-        .ticker-inner {
-          display: inline-flex;
-          gap: 40px;
-          animation: ticker 20s linear infinite;
-          font-size: 13px;
-          font-weight: 600;
-          letter-spacing: 0.05em;
-          text-transform: uppercase;
-          color: var(--muted);
-        }
-
-        .ticker-inner span { color: var(--accent2); }
-
-        @keyframes ticker {
+        @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+        
+        .font-display {
+          font-family: 'Space Grotesk', monospace;
+        }
+        
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes marquee {
           0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
         }
-
-        .cta-section {
-          padding: 6rem 2rem;
-          text-align: center;
-          position: relative;
-          overflow: hidden;
+        
+        .animate-float {
+          animation: float 4s ease-in-out infinite;
         }
-
-        .cta-inner {
-          max-width: 600px;
-          margin: 0 auto;
-          position: relative;
-          z-index: 1;
+        
+        .animate-marquee {
+          animation: marquee 25s linear infinite;
         }
-
-        .cta-glow {
-          position: absolute;
-          top: 50%; left: 50%;
-          transform: translate(-50%, -50%);
-          width: 800px; height: 400px;
-          background: radial-gradient(ellipse, rgba(79,110,247,0.12) 0%, transparent 60%);
-          pointer-events: none;
-        }
-
-        .inline-accent { color: var(--accent); }
-        .inline-gold { color: var(--accent2); }
-        .inline-red { color: var(--accent3); }
       `}</style>
 
       <Header />
 
       {!showCardsOnly && (
         <>
-          {/* HERO */}
-          <section className="hero-section">
-            <div className="hero-bg-glow" />
-            <div className="hero-bg-glow2" />
-            <div className="hero-grid">
-              <div>
-                <div className="hero-eyebrow">Live Multiplayer Quiz Platform</div>
-                <h1 className="hero-title">
-                  Challenge Your<br/>
-                  <span className="line-accent">Friends.</span>{" "}
-                  <span className="line-gold">Prove</span><br/>
-                  Your Genius.
-                </h1>
-                <p className="hero-desc">
-                  Design custom quiz games, pick your categories, and go head-to-head with anyone. The smartest player wins — do you have what it takes?
-                </p>
-                <div className="hero-buttons">
-                  <button className="btn-primary" onClick={() => handleNavigation("/dashboard")}>
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 3l14 9-14 9V3z"/>
-                    </svg>
-                    Create a Game
-                  </button>
-                  <button className="btn-secondary" onClick={() => handleNavigation("/dashboard")}>
-                    Browse Games
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <div className="hero-visual">
-                {[
-                  { src: "/video/sport.mp4", label: "Sports" },
-                  { src: "/video/mobile.mp4", label: "Mobile Games" },
-                  { src: "/video/board.mp4", label: "Board Games" },
-                  { src: "/video/win.mp4", label: "Win Prizes" },
-                ].map((item, i) => (
-                  <div key={i} className="video-card">
-                    <video src={item.src} loop muted autoPlay playsInline />
-                    <div className="video-label">{item.label}</div>
+          {/* Hero Section */}
+          <section className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent)]/5 via-transparent to-[var(--accent)]/5 pointer-events-none" />
+            <div className="absolute top-20 right-10 w-72 h-72 bg-[var(--accent)] rounded-full blur-[100px] opacity-20 animate-float" />
+            <div className="absolute bottom-20 left-10 w-96 h-96 bg-[var(--accent)] rounded-full blur-[120px] opacity-10 animate-float" style={{ animationDelay: "2s" }} />
+            
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6 }}
+                >
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent)]/20 border border-[var(--accent)]/30 mb-6">
+                    <span className="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse" />
+                    <span className="text-xs font-medium text-[var(--accent)] uppercase tracking-wider">Live Multiplayer Battles</span>
                   </div>
-                ))}
+                  
+                  <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-[var(--text)] leading-tight mb-6">
+                    Challenge Your
+                    <span className="bg-gradient-to-r from-[var(--accent)] to-[var(--accent)] bg-clip-text text-transparent"> Friends.</span>
+                    <br />
+                    <span className="bg-gradient-to-r from-[var(--accent2)] to-[var(--accent2)] bg-clip-text text-transparent">Prove</span> Your Genius.
+                  </h1>
+                  
+                  <p className="text-[var(--text2)] text-lg mb-8 max-w-lg">
+                    Design custom quiz games, pick your categories, and go head-to-head with anyone. 
+                    The smartest player wins — do you have what it takes?
+                  </p>
+                  
+                  <div className="flex flex-wrap gap-4">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => handleNavigation("/dashboard")}
+                      className="px-6 py-3 rounded-xl bg-gradient-to-r from-[var(--accent)] to-[var(--accent-h)] text-white font-semibold flex items-center gap-2 hover:shadow-lg transition"
+                    >
+                      <FaGamepad size={16} />
+                      Create a Game
+                      <FaArrowRight size={14} />
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => handleNavigation("/dashboard")}
+                      className="px-6 py-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-[var(--text)] font-semibold flex items-center gap-2 hover:bg-[var(--card2)] transition"
+                    >
+                      Browse Games
+                    </motion.button>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
+                  className="relative"
+                >
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      { src: "/video/sport.mp4", label: "Sports", delay: 0 },
+                      { src: "/video/mobile.mp4", label: "Mobile Games", delay: 0.1 },
+                      { src: "/video/board.mp4", label: "Board Games", delay: 0.2 },
+                      { src: "/video/win.mp4", label: "Win Prizes", delay: 0.3 },
+                    ].map((item, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 + i * 0.1 }}
+                        whileHover={{ y: -4 }}
+                        className="relative rounded-xl overflow-hidden bg-[var(--card)] border border-[var(--border)] group cursor-pointer"
+                      >
+                        <video src={item.src} loop muted autoPlay playsInline className="w-full h-32 object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg)]/60 via-transparent to-transparent" />
+                        <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-[var(--bg)]/60 backdrop-blur-sm text-[var(--text)] text-xs font-medium">
+                          {item.label}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
               </div>
             </div>
           </section>
 
-          {/* TICKER */}
-          <div className="ticker">
-            <div className="ticker-inner">
-              {Array(4).fill(["🏏 Cricket", "⚽ Football", "🏀 Basketball", "🎯 Chess", "🎱 Snooker", "🏆 Win Big", "🧠 IQ Test", "⚡ Fast Rounds"]).flat().map((item, i) => (
-                <span key={i}>{item}</span>
+          {/* Marquee Ticker */}
+          <div className="bg-[var(--surface)] border-y border-[var(--border)] py-3 overflow-hidden">
+            <div className="flex whitespace-nowrap animate-marquee">
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className="flex items-center gap-8 px-4">
+                  {["🏏 Cricket", "⚽ Football", "🏀 Basketball", "🎯 Chess", "🎱 Snooker", "🏆 Win Big", "🧠 IQ Test", "⚡ Fast Rounds", "🎮 Gaming", "📚 General Knowledge"].map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <span className="text-[var(--accent)] text-sm">✦</span>
+                      <span className="text-[var(--text2)] text-sm font-medium">{item}</span>
+                    </div>
+                  ))}
+                </div>
               ))}
             </div>
           </div>
 
-          {/* FEATURES */}
-          <section className="mid-section">
-            <div className="section-container">
-              <div className="section-tag">How it works</div>
-              <h2 className="section-heading">
-                Build. Battle.<br/>
-                <span className="inline-accent">Become a Legend.</span>
-              </h2>
-              <p className="section-sub">
-                Three steps to the ultimate quiz showdown. No complicated setup, just pure competitive fun.
-              </p>
-              <div className="feature-grid">
-                {[
-                  { icon: "🎮", bg: "rgba(79,110,247,0.15)", title: "Design Your Game", desc: "Choose 6 categories from 20+ options. Mix sports, mobile games, board games and more for the perfect challenge." },
-                  { icon: "⚔️", bg: "rgba(247,201,72,0.12)", title: "Battle Head-to-Head", desc: "Two players compete across 36 unique questions. Each player gets 3 dedicated categories — strategy matters." },
-                  { icon: "🏆", bg: "rgba(247,92,79,0.12)", title: "Claim Your Victory", desc: "Earn points based on speed and accuracy. The smartest and fastest player wins the ultimate bragging rights." },
-                ].map((f, i) => (
-                  <div key={i} className="feature-card">
-                    <div className="feature-icon" style={{ background: f.bg }}>{f.icon}</div>
-                    <div className="feature-title">{f.title}</div>
-                    <div className="feature-desc">{f.desc}</div>
-                  </div>
+          {/* How It Works */}
+          <section className="py-20 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
+              <div className="text-center mb-12">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent)]/20 border border-[var(--accent)]/30 mb-4">
+                  <GiBrain size={12} className="text-[var(--accent)]" />
+                  <span className="text-xs font-medium text-[var(--accent)] uppercase tracking-wider">How It Works</span>
+                </div>
+                <h2 className="font-display text-3xl md:text-4xl font-bold text-[var(--text)] mb-4">
+                  Build. Battle.
+                  <span className="bg-gradient-to-r from-[var(--accent)] to-[var(--accent-h)] bg-clip-text text-transparent"> Become a Legend.</span>
+                </h2>
+                <p className="text-[var(--text2)] text-lg max-w-2xl mx-auto">
+                  Three simple steps to the ultimate quiz showdown. No complicated setup — just pure competitive fun.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                {features.map((feature, idx) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.1 }}
+                    whileHover={{ y: -4 }}
+                    className="bg-[var(--card)]/60 backdrop-blur-sm rounded-xl p-6 border border-[var(--border)] hover:border-[var(--accent)]/50 transition-all"
+                  >
+                    <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{ background: 'var(--accent)', opacity: 0.15 }}>
+                      <div className="text-[var(--accent)] text-xl">{feature.icon}</div>
+                    </div>
+                    <h3 className="font-display text-lg font-bold text-[var(--text)] mb-2">{feature.title}</h3>
+                    <p className="text-[var(--text2)] text-sm leading-relaxed">{feature.desc}</p>
+                  </motion.div>
                 ))}
               </div>
 
-              {/* Stats */}
-              <div className="stats-row" style={{ marginTop: '4rem' }}>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[var(--border)] rounded-xl overflow-hidden">
                 {[
-                  { num: "20+", label: "Game Categories" },
-                  { num: "36", label: "Questions Per Game" },
-                  { num: "4", label: "Difficulty Levels" },
-                ].map((s, i) => (
-                  <div key={i} className="stat-item">
-                    <div className="stat-num">{s.num}</div>
-                    <div className="stat-label">{s.label}</div>
+                  { num: "20+", label: "Game Categories", icon: <FaGamepad /> },
+                  { num: "36", label: "Questions Per Game", icon: <GiBrain /> },
+                  { num: "15s", label: "Per Round", icon: <FaClock /> },
+                ].map((stat, idx) => (
+                  <div key={idx} className="bg-[var(--card)] p-6 text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <div className="text-[var(--accent)]">{stat.icon}</div>
+                      <div className="font-display text-3xl font-bold bg-gradient-to-r from-[var(--accent)] to-[var(--accent-h)] bg-clip-text text-transparent">
+                        {stat.num}
+                      </div>
+                    </div>
+                    <div className="text-[var(--text2)] text-sm">{stat.label}</div>
                   </div>
                 ))}
               </div>
             </div>
           </section>
 
-          {/* MID SECTION */}
-          <section className="divider-section">
-            <div className="mid-inner">
-              <div>
-                <div className="section-tag">Game Mode</div>
-                <h2 className="section-heading">
-                  15 Seconds.<br/>
-                  <span className="inline-gold">One Answer.</span><br/>
-                  No Second Chances.
-                </h2>
-                <p className="section-sub" style={{ marginBottom: '1.5rem' }}>
-                  The clock is ticking. Each question gives you 15 seconds to prove you know your stuff. Mess up? Your opponent gains the edge.
-                </p>
-                <div className="pill-tags">
-                  {["⏱ 15s Timer", "💡 3 Lifelines", "🎯 MCQ Format", "📊 Live Scoring", "🔁 New Questions Each Round"].map((p, i) => (
-                    <div key={i} className="pill">
-                      <div className="dot" style={{ background: ['#4f6ef7','#f7c948','#f75c4f','#4ade80','#a78bfa'][i] }} />
-                      {p}
-                    </div>
-                  ))}
-                </div>
-                <div style={{ marginTop: '2rem' }}>
-                  <button className="btn-primary" onClick={() => handleNavigation("/dashboard")}>
-                    Start Playing Now →
-                  </button>
-                </div>
-              </div>
-
-              <div className="mid-visual">
-                <div className="mid-visual-card">
-                  <video src="/video/sport.mp4" loop muted autoPlay playsInline />
-                </div>
-                <div className="floating-badge">
-                  <div className="badge-icon">🏆</div>
-                  <div className="badge-text">
-                    <div className="t1">Last Winner</div>
-                    <div className="t2">600 Points Scored!</div>
+          {/* Game Mode Section */}
+          <section className="py-20 px-4 sm:px-6 lg:px-8 bg-[var(--surface)]/40">
+            <div className="max-w-7xl mx-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <motion.div
+                  initial={{ opacity: 0, x: -30 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                >
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent2)]/20 border border-[var(--accent2)]/30 mb-4">
+                    <FaBolt size={10} className="text-[var(--accent2)]" />
+                    <span className="text-xs font-medium text-[var(--accent2)] uppercase tracking-wider">Game Mode</span>
                   </div>
-                </div>
+                  <h2 className="font-display text-3xl md:text-4xl font-bold text-[var(--text)] mb-4">
+                    15 Seconds.
+                    <span className="text-[var(--accent2)]"> One Answer.</span>
+                    <br />
+                    No Second Chances.
+                  </h2>
+                  <p className="text-[var(--text2)] text-lg mb-6">
+                    Each question gives you 15 seconds to prove you know your stuff. Miss it and your opponent gains the edge.
+                  </p>
+                  <div className="flex flex-wrap gap-3 mb-8">
+                    {["⏱ 15s Timer", "🎯 MCQ Format", "📊 Live Scoring", "🔁 Unique Questions"].map((tag, i) => (
+                      <div key={i} className="px-3 py-1 rounded-full bg-[var(--card)] border border-[var(--border)] text-[var(--text2)] text-sm">
+                        {tag}
+                      </div>
+                    ))}
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleNavigation("/dashboard")}
+                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-[var(--accent)] to-[var(--accent-h)] text-white font-semibold flex items-center gap-2"
+                  >
+                    Start Playing Now
+                    <FaArrowRight size={14} />
+                  </motion.button>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, x: 30 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  className="relative"
+                >
+                  <div className="rounded-xl overflow-hidden bg-[var(--card)] border border-[var(--border)]">
+                    <video src="/video/sport.mp4" loop muted autoPlay playsInline className="w-full" />
+                  </div>
+                </motion.div>
               </div>
             </div>
           </section>
         </>
       )}
 
-      {/* PACKAGES */}
-      <section className="packages-section">
-        <div className="section-container">
+      {/* Packages Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
           {showCardsOnly && (
-            <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-              <div style={{ 
-                display: 'inline-block',
-                background: 'rgba(247,92,79,0.12)',
-                border: '1px solid rgba(247,92,79,0.3)',
-                borderRadius: '12px',
-                padding: '12px 24px',
-                color: '#f75c4f',
-                fontWeight: 600,
-                marginBottom: '2rem',
-                fontSize: '1rem'
-              }}>
-                ⚡ Purchase a package to start creating games
-              </div>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center mb-8 p-4 rounded-xl bg-[var(--accent2)]/10 border border-[var(--accent2)]/30"
+            >
+              <p className="text-[var(--accent2)] font-medium">⚡ Purchase a package to start creating games</p>
+            </motion.div>
           )}
-          <div style={{ textAlign: 'center' }}>
-            <div className="section-tag" style={{ justifyContent: 'center' }}>Game Packages</div>
-            <h2 className="section-heading">
-              Choose Your <span className="inline-accent">Battle Pass</span>
+
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent)]/20 border border-[var(--accent)]/30 mb-4">
+              <FaTrophy size={12} className="text-[var(--accent)]" />
+              <span className="text-xs font-medium text-[var(--accent)] uppercase tracking-wider">Game Packages</span>
+            </div>
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-[var(--text)] mb-4">
+              Choose Your
+              <span className="bg-gradient-to-r from-[var(--accent)] to-[var(--accent-h)] bg-clip-text text-transparent"> Battle Pass</span>
             </h2>
-            <p className="section-sub" style={{ margin: '0 auto' }}>
+            <p className="text-[var(--text2)] text-lg max-w-2xl mx-auto">
               Each package gives you a set of games to create and play. No subscriptions, no hidden fees.
             </p>
           </div>
 
-          <div className="packages-grid">
-            {Games.map((game, index) => (
-              <div key={index} className={`package-card ${game.popular ? 'popular' : ''}`}>
-                {game.popular && <div className="popular-badge">Most Popular</div>}
-                <div className="package-img">
-                  <img src={coll.src} alt="Package" />
-                  <div className="package-img-overlay">
-                    <div className="package-count">
-                      {game.pac.split(' ')[0]}
-                      <span>{game.pac.split(' ').slice(1).join(' ')}</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {Games.map((game, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1 }}
+                whileHover={{ y: -4 }}
+                className={`relative bg-[var(--card)]/80 backdrop-blur-sm rounded-xl border overflow-hidden transition-all ${
+                  game.popular ? "border-[var(--accent)] shadow-lg shadow-[var(--accent)]/20" : "border-[var(--border)]"
+                }`}
+              >
+                {game.popular && (
+                  <div className="absolute top-0 right-0">
+                    <div className="px-3 py-1 bg-gradient-to-r from-[var(--accent)] to-[var(--accent-h)] text-white text-xs font-bold rounded-bl-lg flex items-center gap-1">
+                      <FaFire size={10} />
+                      Popular
                     </div>
                   </div>
-                </div>
-                <div className="package-body">
-                  <div className="package-price">{game.rs}</div>
-                  <div className="package-desc">{game.info}</div>
-                  <button
-                    className={`btn-buy ${game.popular ? 'btn-buy-primary' : 'btn-buy-secondary'}`}
+                )}
+                <div className="p-6 text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-h)] flex items-center justify-center">
+                    <FaGamepad className="text-white text-2xl" />
+                  </div>
+                  <div className="font-display text-3xl font-bold text-[var(--text)] mb-1">
+                    {game.pac.split(" ")[0]}
+                    <span className="text-sm text-[var(--text2)]"> {game.pac.split(" ").slice(1).join(" ")}</span>
+                  </div>
+                  <div className="font-display text-xl font-bold bg-gradient-to-r from-[var(--accent)] to-[var(--accent-h)] bg-clip-text text-transparent mb-2">
+                    {game.rs}
+                  </div>
+                  <p className="text-[var(--text2)] text-sm mb-6">{game.info}</p>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => BuyGame(game)}
+                    className={`w-full py-2 rounded-lg font-semibold flex items-center justify-center gap-2 transition ${
+                      game.popular
+                        ? "bg-gradient-to-r from-[var(--accent)] to-[var(--accent-h)] text-white hover:shadow-lg"
+                        : "bg-[var(--card)] border border-[var(--border)] text-[var(--text2)] hover:text-[var(--text)] hover:border-[var(--accent)]/50"
+                    }`}
                   >
-                    <svg width="14" height="14" viewBox="0 0 18 21" fill="currentColor">
-                      <path d="M15 12a1 1 0 0 0 .962-.726l2-7A1 1 0 0 0 17 3H3.77L3.175.745A1 1 0 0 0 2.208 0H1a1 1 0 0 0 0 2h.438l.6 2.255v.019l2 7 .746 2.986A3 3 0 1 0 9 17a2.966 2.966 0 0 0-.184-1h2.368c-.118.32-.18.659-.184 1a3 3 0 1 0 3-3H6.78l-.5-2H15Z"/>
-                    </svg>
                     Buy Now
-                  </button>
+                    <FaArrowRight size={12} />
+                  </motion.button>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
       {!showCardsOnly && (
-        <section className="cta-section">
-          <div className="cta-glow" />
-          <div className="cta-inner">
-            <div className="section-tag" style={{ justifyContent: 'center' }}>Ready to Play?</div>
-            <h2 className="section-heading">
-              Your Next <span className="inline-accent">Victory</span> Awaits
+        <section className="py-20 px-4 sm:px-6 lg:px-8 text-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent)]/10 to-[var(--accent-h)]/10 pointer-events-none" />
+          <div className="relative max-w-3xl mx-auto">
+            <div className="mb-6">
+              <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-h)] flex items-center justify-center animate-float">
+                <FaTrophy className="text-white text-3xl" />
+              </div>
+            </div>
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-[var(--text)] mb-4">
+              Your Next
+              <span className="bg-gradient-to-r from-[var(--accent)] to-[var(--accent-h)] bg-clip-text text-transparent"> Victory</span>
+              <br />
+              Awaits
             </h2>
-            <p style={{ color: 'var(--muted)', marginBottom: '2rem', lineHeight: 1.7 }}>
-              Join thousands of players who've proven their knowledge. Create your first game in under a minute.
+            <p className="text-[var(--text2)] text-lg mb-8">
+              Join thousands of players who've proved their knowledge. Create your first game in under a minute.
             </p>
-            <button className="btn-primary" style={{ margin: '0 auto', fontSize: '1.1rem', padding: '16px 36px' }} onClick={() => handleNavigation("/dashboard")}>
-              Create Your Game Now →
-            </button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleNavigation("/dashboard")}
+              className="px-8 py-3 rounded-xl bg-gradient-to-r from-[var(--accent)] to-[var(--accent-h)] text-white font-semibold text-lg flex items-center justify-center gap-2 mx-auto hover:shadow-lg transition"
+            >
+              Create Your Game Now
+              <FaArrowRight size={16} />
+            </motion.button>
           </div>
         </section>
       )}
 
       <Footer />
-    </>
+    </div>
   );
 }

@@ -7,6 +7,9 @@ import { auth, db } from "../firebase/firebaseConfig";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { toast, ToastContainer } from "react-toastify";
+import { useTheme } from "../context/ThemeContext";
+import { FaGamepad, FaUser, FaSignOutAlt, FaUserCircle, FaShoppingCart, FaHeadset, FaSun, FaMoon, FaBars, FaTimes, FaChevronDown, FaTachometerAlt } from "react-icons/fa";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Header() {
   interface UserName { firstName: string; lastName: string; }
@@ -15,20 +18,21 @@ export default function Header() {
   const [userName, setUserName] = useState<UserName | null>(null);
   const [loading, setLoading] = useState(true);
   const [scrolled, setScrolled] = useState(false);
+  const { theme, toggle } = useTheme();
   const router = useRouter();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
         try {
-          const doc_ = await getDoc(doc(db, "users", user.uid));
-          if (doc_.exists()) setUserName(doc_.data() as UserName);
+          const d = await getDoc(doc(db, "users", user.uid));
+          if (d.exists()) setUserName(d.data() as UserName);
         } catch {}
       } else setUserName(null);
       setLoading(false);
@@ -37,6 +41,8 @@ export default function Header() {
   }, []);
 
   const handleLogout = async () => {
+    setIsDropOpen(false);
+    setIsMenuOpen(false);
     await signOut(auth);
     setUserName(null);
     router.push("/login");
@@ -45,370 +51,287 @@ export default function Header() {
 
   const nav = (path: string, requireLogin = false) => {
     setIsMenuOpen(false);
+    setIsDropOpen(false);
     if (requireLogin && !userName) router.push("/login");
     else router.push(path);
   };
 
+  const navLinks = [
+    { name: "Dashboard", path: "/dashboard", icon: FaTachometerAlt, requireLogin: true },
+    { name: "Buy Games", path: "/?showCards=true", icon: FaShoppingCart, requireLogin: false },
+    { name: "Support", path: "/contact", icon: FaHeadset, requireLogin: false },
+  ];
+
+  const getInitials = () => {
+    if (!userName) return "?";
+    return `${userName.firstName[0]}${userName.lastName?.[0] || ""}`.toUpperCase();
+  };
+
   return (
     <>
-      <style jsx>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Outfit:wght@400;500;600&display=swap');
-
-        .nav-root {
-          position: sticky;
-          top: 0;
-          z-index: 100;
-          transition: all 0.3s ease;
-          font-family: 'Outfit', sans-serif;
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+        
+        .font-display {
+          font-family: 'Space Grotesk', monospace;
         }
-
-        .nav-root.scrolled {
-          background: rgba(10,10,15,0.9);
-          backdrop-filter: blur(20px);
-          border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
-
-        .nav-root:not(.scrolled) {
-          background: #0a0a0f;
-          border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .nav-inner {
-          max-width: 1300px;
-          margin: 0 auto;
-          padding: 0 2rem;
-          height: 72px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 2rem;
-        }
-
-        .nav-logo {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          cursor: pointer;
-          text-decoration: none;
-        }
-
-        .logo-img-wrap {
-          width: 36px; height: 36px;
-          border-radius: 10px;
-          overflow: hidden;
-          border: 1px solid rgba(255,255,255,0.1);
-          flex-shrink: 0;
-        }
-
-        .logo-name {
-          font-family: 'Syne', sans-serif;
-          font-size: 1.3rem;
-          font-weight: 800;
-          color: #fff;
-          letter-spacing: -0.02em;
-        }
-
-        .logo-name span { color: #4f6ef7; }
-
-        .nav-links {
-          display: flex;
-          align-items: center;
-          gap: 32px;
-          list-style: none;
-          margin: 0; padding: 0;
-        }
-
-        .nav-link {
-          font-size: 0.9rem;
-          font-weight: 500;
-          color: #9ca3af;
-          cursor: pointer;
-          transition: color 0.2s;
-          letter-spacing: 0.01em;
-        }
-
-        .nav-link:hover { color: #fff; }
-
-        .nav-right { display: flex; align-items: center; gap: 12px; }
-
-        .avatar-btn {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 8px 16px;
-          background: rgba(79,110,247,0.1);
-          border: 1px solid rgba(79,110,247,0.25);
-          border-radius: 100px;
-          cursor: pointer;
-          transition: all 0.2s;
-          color: #c7d2fe;
-          font-size: 0.9rem;
-          font-weight: 500;
-        }
-
-        .avatar-btn:hover {
-          background: rgba(79,110,247,0.18);
-          border-color: rgba(79,110,247,0.5);
-        }
-
-        .avatar-circle {
-          width: 28px; height: 28px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #4f6ef7, #7c5cfc);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 12px;
-          font-weight: 700;
-          color: white;
-          flex-shrink: 0;
-        }
-
-        .chevron {
-          width: 14px; height: 14px;
-          transition: transform 0.2s;
-          opacity: 0.6;
-        }
-
-        .chevron.open { transform: rotate(180deg); }
-
-        .dropdown {
-          position: absolute;
-          top: calc(100% + 8px);
-          right: 0;
-          background: #161b27;
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 14px;
-          padding: 6px;
-          min-width: 180px;
-          box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-          animation: dropIn 0.15s ease;
-        }
-
-        @keyframes dropIn {
-          from { opacity: 0; transform: translateY(-8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        .drop-item {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 10px 14px;
-          border-radius: 10px;
-          font-size: 0.9rem;
-          font-weight: 500;
-          color: #d1d5db;
-          cursor: pointer;
-          transition: all 0.15s;
-          text-decoration: none;
-          width: 100%;
-          text-align: left;
-          background: none;
-          border: none;
-          font-family: 'Outfit', sans-serif;
-        }
-
-        .drop-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
-        .drop-item.danger:hover { background: rgba(239,68,68,0.08); color: #f87171; }
-
-        .drop-sep {
-          height: 1px;
-          background: rgba(255,255,255,0.06);
-          margin: 4px 0;
-        }
-
-        .login-btn {
-          padding: 9px 22px;
-          background: #4f6ef7;
-          color: white;
-          border: none;
-          border-radius: 10px;
-          font-size: 0.9rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-          font-family: 'Outfit', sans-serif;
-        }
-
-        .login-btn:hover {
-          background: #3d58e0;
-          transform: translateY(-1px);
-          box-shadow: 0 6px 20px rgba(79,110,247,0.35);
-        }
-
-        .mobile-toggle {
-          display: none;
-          align-items: center;
-          justify-content: center;
-          width: 38px; height: 38px;
-          border-radius: 10px;
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.08);
-          cursor: pointer;
-          color: #fff;
-          transition: background 0.2s;
-        }
-
-        .mobile-toggle:hover { background: rgba(255,255,255,0.1); }
-
-        @media (max-width: 768px) {
-          .nav-links { display: none; }
-          .nav-right .avatar-btn span { display: none; }
-          .mobile-toggle { display: flex; }
-        }
-
-        .mobile-menu {
-          position: fixed;
-          top: 0; left: 0; bottom: 0;
-          width: 280px;
-          background: #0f1117;
-          border-right: 1px solid rgba(255,255,255,0.06);
-          z-index: 200;
-          padding: 24px;
-          transform: translateX(-100%);
-          transition: transform 0.3s ease;
-        }
-
-        .mobile-menu.open { transform: translateX(0); }
-
-        .mobile-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(0,0,0,0.6);
-          z-index: 199;
-          backdrop-filter: blur(4px);
-        }
-
-        .mobile-close {
-          position: absolute;
-          top: 20px; right: 20px;
-          width: 36px; height: 36px;
-          display: flex; align-items: center; justify-content: center;
-          background: rgba(255,255,255,0.06);
-          border-radius: 8px;
-          cursor: pointer;
-          color: #fff;
-          border: none;
-        }
-
-        .mobile-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
-
-        .mobile-nav-link {
-          display: block;
-          padding: 12px 16px;
-          border-radius: 10px;
-          color: #9ca3af;
-          font-size: 0.95rem;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.15s;
-          margin-bottom: 4px;
-        }
-
-        .mobile-nav-link:hover { background: rgba(255,255,255,0.05); color: #fff; }
-
-        .mobile-actions { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 10px; }
-
-        .mobile-btn {
-          width: 100%;
-          padding: 12px;
-          border-radius: 10px;
-          font-size: 0.95rem;
-          font-weight: 600;
-          cursor: pointer;
-          border: none;
-          font-family: 'Outfit', sans-serif;
-        }
-
-        .avatar-relative { position: relative; }
       `}</style>
-      <ToastContainer position="top-center" />
 
-      <nav className={`nav-root${scrolled ? ' scrolled' : ''}`}>
-        <div className="nav-inner">
-          <div className="nav-logo" onClick={() => router.push("/")}>
-            <div className="logo-img-wrap">
-              <Image src={logo} alt="IQPLAY" width={36} height={36} style={{ margin: 0 }} />
+      <ToastContainer
+        position="top-center"
+        toastStyle={{
+          background: "var(--card)",
+          color: "var(--text)",
+          borderRadius: "16px",
+          border: "1px solid var(--border)",
+        }}
+      />
+
+      <motion.nav
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.3 }}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          scrolled
+            ? "bg-[var(--bg)]/80 backdrop-blur-xl border-b border-[var(--border)]"
+            : "bg-transparent"
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="flex items-center gap-2 cursor-pointer group"
+              onClick={() => nav("/")}
+            >
+              <div className="relative">
+                <div className="absolute inset-0 bg-[#7c3aed] rounded-xl blur-md opacity-50 group-hover:opacity-75 transition" />
+                <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-[#7c3aed] to-[#c084fc] flex items-center justify-center">
+                  <FaGamepad className="text-white text-lg" />
+                </div>
+              </div>
+              <span className="font-display font-bold text-xl bg-gradient-to-r from-[var(--text)] to-[var(--text2)] bg-clip-text text-transparent">
+                BRAIN<span className="text-[#7c3aed]">ARENA</span>
+              </span>
+            </motion.div>
+
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-6">
+              {navLinks.map((link, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => nav(link.path, link.requireLogin)}
+                  className="flex items-center gap-2 text-[var(--text2)] hover:text-[var(--text)] transition-colors text-sm font-medium"
+                >
+                  <link.icon size={14} />
+                  {link.name}
+                </button>
+              ))}
             </div>
-            <span className="logo-name">IQ<span>PLAY</span></span>
+
+            {/* Right Section */}
+            <div className="flex items-center gap-3">
+              {/* Theme Toggle */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={toggle}
+                className="w-9 h-9 rounded-xl bg-[var(--card2)] border border-[var(--border)] flex items-center justify-center text-[var(--text2)] hover:text-[var(--text)] transition"
+                aria-label="Toggle theme"
+              >
+                {theme === "dark" ? <FaSun size={15} /> : <FaMoon size={15} />}
+              </motion.button>
+
+              {!loading && (
+                userName ? (
+                  <div className="relative">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      onClick={() => setIsDropOpen(!isDropOpen)}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--card2)] border border-[var(--border)] hover:border-[#7c3aed]/50 transition-all"
+                    >
+                      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#7c3aed] to-[#c084fc] flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">{getInitials()}</span>
+                      </div>
+                      <span className="text-[var(--text)] text-sm font-medium hidden sm:block">
+                        {userName.firstName}
+                      </span>
+                      <FaChevronDown
+                        size={10}
+                        className={`text-[var(--text2)] transition-transform duration-200 ${isDropOpen ? "rotate-180" : ""}`}
+                      />
+                    </motion.button>
+
+                    <AnimatePresence>
+                      {isDropOpen && (
+                        <>
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-40"
+                            onClick={() => setIsDropOpen(false)}
+                          />
+                          <motion.div
+                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute right-0 top-full mt-2 w-56 bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl z-50 overflow-hidden"
+                          >
+                            <div className="p-2">
+                              <div className="px-3 py-2 mb-1 border-b border-[var(--border)]">
+                                <p className="text-[var(--text2)] text-xs uppercase tracking-wider">Signed in as</p>
+                                <p className="text-[var(--text)] font-medium text-sm">
+                                  {userName.firstName} {userName.lastName}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => nav("/profile", true)}
+                                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--text2)] hover:text-[var(--text)] hover:bg-[var(--card2)] transition text-sm"
+                              >
+                                <FaUserCircle size={16} />
+                                My Profile
+                              </button>
+                              <button
+                                onClick={() => nav("/dashboard", true)}
+                                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--text2)] hover:text-[var(--text)] hover:bg-[var(--card2)] transition text-sm"
+                              >
+                                <FaTachometerAlt size={14} />
+                                Dashboard
+                              </button>
+                              <div className="h-px bg-[var(--border)] my-1" />
+                              <button
+                                onClick={handleLogout}
+                                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[#ff6b8a] hover:bg-[#ff3b5c]/10 transition text-sm"
+                              >
+                                <FaSignOutAlt size={14} />
+                                Sign Out
+                              </button>
+                            </div>
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                ) : (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => router.push("/login")}
+                    className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-[#7c3aed] to-[#c084fc] text-white text-sm font-semibold hover:shadow-lg transition"
+                  >
+                    Sign In
+                  </motion.button>
+                )
+              )}
+
+              {/* Mobile Menu Button */}
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsMenuOpen(true)}
+                className="md:hidden w-9 h-9 rounded-xl bg-[var(--card2)] border border-[var(--border)] flex items-center justify-center text-[var(--text)]"
+              >
+                <FaBars size={16} />
+              </motion.button>
+            </div>
           </div>
+        </div>
+      </motion.nav>
 
-          <ul className="nav-links">
-            <li className="nav-link" onClick={() => nav("/dashboard", true)}>My Playtime</li>
-            <li className="nav-link" onClick={() => nav("/contact")}>Contact Support</li>
-            <li className="nav-link" onClick={() => nav("/?showCards=true")}>Buy Games</li>
-          </ul>
-
-          <div className="nav-right">
-            {!loading && (
-              userName ? (
-                <div className="avatar-relative">
-                  <button className="avatar-btn" onClick={() => setIsDropOpen(!isDropOpen)}>
-                    <div className="avatar-circle">{userName.firstName[0]}</div>
-                    <span>{userName.firstName} {userName.lastName}</span>
-                    <svg className={`chevron${isDropOpen ? ' open' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                  </button>
-                  {isDropOpen && (
-                    <div className="dropdown">
-                      <a href="/profile" className="drop-item">
-                        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                        </svg>
-                        Profile
-                      </a>
-                      <div className="drop-sep" />
-                      <button className="drop-item danger" onClick={handleLogout}>
-                        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                        </svg>
-                        Logout
-                      </button>
+      {/* Mobile Drawer */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 md:hidden"
+              onClick={() => setIsMenuOpen(false)}
+            />
+            <motion.div
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: "spring", damping: 25 }}
+              className="fixed top-0 left-0 bottom-0 w-72 bg-[var(--card)] border-r border-[var(--border)] z-50 md:hidden"
+            >
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-2" onClick={() => nav("/")}>
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#7c3aed] to-[#c084fc] flex items-center justify-center">
+                      <FaGamepad className="text-white" />
                     </div>
+                    <span className="font-display font-bold text-lg bg-gradient-to-r from-[var(--text)] to-[var(--text2)] bg-clip-text text-transparent">
+                      BRAIN<span className="text-[#7c3aed]">ARENA</span>
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setIsMenuOpen(false)}
+                    className="w-9 h-9 rounded-xl bg-[var(--card2)] border border-[var(--border)] flex items-center justify-center"
+                  >
+                    <FaTimes size={16} />
+                  </button>
+                </div>
+
+                <div className="space-y-1">
+                  {navLinks.map((link, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => nav(link.path, link.requireLogin)}
+                      className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-[var(--text2)] hover:text-[var(--text)] hover:bg-[var(--card2)] transition text-sm"
+                    >
+                      <link.icon size={16} />
+                      {link.name}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="h-px bg-[var(--border)] my-4" />
+
+                <div className="space-y-2">
+                  <button
+                    onClick={toggle}
+                    className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-[var(--text2)] hover:text-[var(--text)] hover:bg-[var(--card2)] transition text-sm"
+                  >
+                    {theme === "dark" ? <FaSun size={16} /> : <FaMoon size={16} />}
+                    {theme === "dark" ? "Light Mode" : "Dark Mode"}
+                  </button>
+
+                  {userName ? (
+                    <>
+                      <button
+                        onClick={() => nav("/profile", true)}
+                        className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-[var(--text2)] hover:text-[var(--text)] hover:bg-[var(--card2)] transition text-sm"
+                      >
+                        <FaUserCircle size={16} />
+                        My Profile
+                      </button>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-[#ff6b8a] hover:bg-[#ff3b5c]/10 transition text-sm"
+                      >
+                        <FaSignOutAlt size={16} />
+                        Sign Out
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => nav("/login")}
+                      className="w-full px-3 py-3 rounded-xl bg-gradient-to-r from-[#7c3aed] to-[#c084fc] text-white font-semibold text-sm"
+                    >
+                      Sign In
+                    </button>
                   )}
                 </div>
-              ) : (
-                <button className="login-btn" onClick={() => router.push("/login")}>Login</button>
-              )
-            )}
-            <button className="mobile-toggle" onClick={() => setIsMenuOpen(true)}>
-              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      {isMenuOpen && <div className="mobile-overlay" onClick={() => setIsMenuOpen(false)} />}
-      <div className={`mobile-menu${isMenuOpen ? ' open' : ''}`}>
-        <button className="mobile-close" onClick={() => setIsMenuOpen(false)}>
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
-        <div className="mobile-logo">
-          <div className="logo-img-wrap">
-            <Image src={logo} alt="IQPLAY" width={36} height={36} style={{ margin: 0 }} />
-          </div>
-          <span className="logo-name">IQ<span>PLAY</span></span>
-        </div>
-        <div className="mobile-nav-link" onClick={() => nav("/dashboard", true)}>My Playtime</div>
-        <div className="mobile-nav-link" onClick={() => nav("/contact")}>Contact Support</div>
-        <div className="mobile-nav-link" onClick={() => nav("/?showCards=true")}>Buy Games</div>
-        <div className="mobile-actions">
-          {userName ? (
-            <>
-              <button className="mobile-btn" style={{ background: 'rgba(79,110,247,0.15)', color: '#818cf8', border: '1px solid rgba(79,110,247,0.25)' }} onClick={() => nav("/profile")}>Profile</button>
-              <button className="mobile-btn" style={{ background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' }} onClick={handleLogout}>Logout</button>
-            </>
-          ) : (
-            <button className="mobile-btn" style={{ background: '#4f6ef7', color: 'white' }} onClick={() => nav("/login")}>Login</button>
-          )}
-        </div>
-      </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
 }

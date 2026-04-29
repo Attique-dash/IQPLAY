@@ -5,7 +5,10 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from 'next/navigation';
 import { auth, db } from "../firebase/firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
-import { FaSearch } from "react-icons/fa";
+import { FaSearch, FaGamepad, FaPlus, FaShoppingCart, FaPlay, FaCalendarAlt, FaStar } from "react-icons/fa";
+import { GiSwordClash, GiBattleAxe } from "react-icons/gi";
+import { MdGames, MdCategory } from "react-icons/md";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
 interface BrowserGameProps {
@@ -20,6 +23,7 @@ export default function BrowserGame({ onShowDashboard, onShowBrowserGame }: Brow
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [totalGames, setTotalGames] = useState<number>(0);
+  const [hoveredGame, setHoveredGame] = useState<string | null>(null);
   const router = useRouter();
 
   const getQueryParams = () => {
@@ -29,16 +33,7 @@ export default function BrowserGame({ onShowDashboard, onShowBrowserGame }: Brow
     return new URLSearchParams();
   };
 
-
-
   useEffect(() => {
-    const params = getQueryParams();
-    const showDashboard = params.get('showDashboard') === 'true';
-    
-    if (showDashboard) {
-      // Handle dashboard show logic here if needed
-    }
-
     const fetchGames = async () => {
       setLoading(true);
       try {
@@ -53,7 +48,7 @@ export default function BrowserGame({ onShowDashboard, onShowBrowserGame }: Brow
           const querySnapshot = await getDocs(userCollection);
 
           if (querySnapshot.empty) {
-            setError("No browser game data available.");
+            setError("No games found. Create your first game!");
             setGames([]);
             setFilteredGames([]);
           } else {
@@ -95,7 +90,6 @@ export default function BrowserGame({ onShowDashboard, onShowBrowserGame }: Brow
       });
 
       setTotalGames(total);
-      console.log("Total games:", total);
     } catch (err) {
       console.error("Error fetching payment data:", err);
       setTotalGames(0);
@@ -104,14 +98,14 @@ export default function BrowserGame({ onShowDashboard, onShowBrowserGame }: Brow
 
   const handlePlayNow = (gameId: string) => {
     if (totalGames > 0) {
-      router.push(`/creategame?gameId=${gameId}`);
+      router.push(`/usergame?gameId=${gameId}`);
     } else {
-      setError("Please buy the games first.");
+      setError("Please buy games first to play.");
     }
   };
 
   const handleCreateGame = () => {
-    onShowDashboard(); // This will show the dashboard view
+    onShowDashboard();
   };
 
   const handleBuyGame = () => {
@@ -143,98 +137,212 @@ export default function BrowserGame({ onShowDashboard, onShowBrowserGame }: Brow
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-lg font-semibold">Loading...</p>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+            className="w-12 h-12 border-3 border-[#1e2a4a] border-t-[#7c3aed] rounded-full mx-auto mb-4"
+          />
+          <p className="text-[#94a3b8]">Loading your games...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-4 mt-5">
-      {/* Search Bar & Total Games Counter */}
-      <div className="mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="absolute ml-[6px] hidden md:block">
-          <FaSearch className="text-lg text-blue-500" />
-        </div>
-        <input
-          type="text"
-          placeholder="Search your game name..."
-          value={searchQuery}
-          onChange={handleSearch}
-          className="w-full md:max-w-md p-2 shadow-lg pl-8 border rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <div className="bg-gray-400 border-blue-500 border-2 rounded-lg p-3 text-lg sm:text-xl font-semibold text-white text-center w-full md:w-auto">
-          You have a total of {totalGames} Games
+    <div className="space-y-6">
+      {/* Stats Bar */}
+      <div className="bg-gradient-to-r from-[#1e1e2f] to-[#0f1222] rounded-xl p-4 border border-[#1e2a4a]">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-[#7c3aed]/20 flex items-center justify-center">
+              <MdGames className="text-[#7c3aed] text-xl" />
+            </div>
+            <div>
+              <p className="text-[#94a3b8] text-xs uppercase tracking-wider">Total Games Available</p>
+              <p className="font-display text-2xl font-bold text-white">{totalGames}</p>
+            </div>
+          </div>
+          
+          <div className="relative w-full sm:w-64">
+            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8] text-sm" />
+            <input
+              type="text"
+              placeholder="Search your game..."
+              value={searchQuery}
+              onChange={handleSearch}
+              className="w-full pl-10 pr-4 py-2 bg-[#1e1e2f] border border-[#1e2a4a] rounded-xl text-white placeholder-[#4a5568] focus:outline-none focus:border-[#7c3aed] transition"
+            />
+          </div>
         </div>
       </div>
 
       {/* Error Message */}
-      {error && <p className="text-center text-red-500">{error}</p>}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="p-4 rounded-xl bg-[#ef4444]/10 border border-[#ef4444]/30 text-[#ef4444] text-center"
+          >
+            {error}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Game Cards Grid */}
-      {filteredGames.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {filteredGames.map((game) => (
-            <div key={game.id} className="border p-4 rounded shadow bg-white">
-              <h2 className="font-semibold text-2xl text-blue-500 text-center mb-2">
-                {game.gameName}
-              </h2>
-
-              {/* Game Cards Images */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4 justify-items-center">
-                {game.selectedCards?.map(
-                  (
-                    card: { image: { src: string }; title: string },
-                    index: number
-                  ) => (
-                    <div key={index} className="text-center">
-                      <Image
-                        src={card.image.src}
-                        alt={card.title}
-                        width={80}
-                        height={80}
-                        className="rounded mt-0"
-                      />
-                      <p className="text-sm font-semibold bg-slate-400">
-                        {card.title}
-                      </p>
+      {/* Games Grid */}
+      {filteredGames.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filteredGames.map((game, index) => (
+            <motion.div
+              key={game.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              whileHover={{ y: -4 }}
+              onHoverStart={() => setHoveredGame(game.id)}
+              onHoverEnd={() => setHoveredGame(null)}
+              className="group relative"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-[#7c3aed]/20 via-transparent to-[#c084fc]/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl" />
+              
+              <div className="relative bg-[#0f1222]/80 backdrop-blur-sm rounded-xl border border-[#1e2a4a] overflow-hidden transition-all duration-300 group-hover:border-[#7c3aed]/50">
+                {/* Game Header */}
+                <div className="bg-gradient-to-r from-[#1e1e2f] to-[#0f1222] p-4 border-b border-[#1e2a4a]">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-display font-bold text-lg text-white truncate">{game.gameName}</h3>
+                    <div className="flex items-center gap-1 text-[#fbbf24] text-xs">
+                      <FaStar size={10} />
+                      <FaStar size={10} />
+                      <FaStar size={10} />
                     </div>
-                  )
+                  </div>
+                  <div className="flex items-center gap-2 mt-1 text-xs text-[#94a3b8]">
+                    <FaCalendarAlt size={10} />
+                    <span>Created {new Date(game.createdAt?.toDate()).toLocaleDateString()}</span>
+                  </div>
+                </div>
+
+                {/* Game Categories Preview */}
+                <div className="p-4">
+                  <div className="flex items-center gap-1 text-[#94a3b8] text-xs mb-3">
+                    <MdCategory size={12} />
+                    <span>{game.selectedCards?.length || 0} Categories</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-2">
+                    {game.selectedCards?.slice(0, 3).map((card: any, idx: number) => (
+                      <div key={idx} className="text-center">
+                        <div className="relative h-16 rounded-lg overflow-hidden bg-[#1e1e2f]">
+                          <img
+                            src={card.image?.src || card.image}
+                            alt={card.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <p className="text-[10px] text-[#94a3b8] mt-1 truncate">{card.title}</p>
+                      </div>
+                    ))}
+                    {game.selectedCards?.length > 3 && (
+                      <div className="flex items-center justify-center h-16 rounded-lg bg-[#1e1e2f] border border-dashed border-[#1e2a4a]">
+                        <span className="text-[#c084fc] text-xs font-medium">
+                          +{game.selectedCards.length - 3}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Players Info */}
+                <div className="px-4 pb-2 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1">
+                    <GiSwordClash className="text-[#7c3aed]" />
+                    <span className="text-[#94a3b8]">{game.playerOne}</span>
+                  </div>
+                  <span className="text-[#1e2a4a]">VS</span>
+                  <div className="flex items-center gap-1">
+                    <GiBattleAxe className="text-[#c084fc]" />
+                    <span className="text-[#94a3b8]">{game.playerTwo}</span>
+                  </div>
+                </div>
+
+                {/* Play Button */}
+                <div className="p-4 pt-2">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handlePlayNow(game.id)}
+                    disabled={totalGames === 0}
+                    className={`w-full py-2.5 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all ${
+                      totalGames > 0
+                        ? "bg-gradient-to-r from-[#7c3aed] to-[#c084fc] text-white hover:shadow-lg hover:shadow-[#7c3aed]/30"
+                        : "bg-[#1e1e2f] text-[#4a5568] cursor-not-allowed border border-dashed border-[#1e2a4a]"
+                    }`}
+                  >
+                    {totalGames > 0 ? (
+                      <>
+                        <FaPlay size={12} />
+                        Play Game
+                      </>
+                    ) : (
+                      <>
+                        <FaShoppingCart size={12} />
+                        Buy Games to Play
+                      </>
+                    )}
+                  </motion.button>
+                </div>
+
+                {/* Hover Effect Border */}
+                {hoveredGame === game.id && (
+                  <motion.div
+                    layoutId="gameHover"
+                    className="absolute inset-0 rounded-xl pointer-events-none"
+                    style={{ border: '1px solid rgba(124,58,237,0.4)', boxShadow: 'inset 0 0 20px rgba(124,58,237,0.1)' }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  />
                 )}
               </div>
-
-              {/* Play Now Button */}
-              <button
-                className={`mt-4 text-white text-xl font-semibold px-4 py-2 rounded w-full ${
-                  totalGames > 0
-                    ? "bg-blue-500 hover:bg-blue-600"
-                    : "bg-gray-400 cursor-not-allowed"
-                }`}
-                onClick={() => handlePlayNow(game.id)}
-                disabled={totalGames === 0}
-              >
-                {totalGames > 0 ? "Play Now" : "Please Buy the Games"}
-              </button>
-            </div>
+            </motion.div>
           ))}
         </div>
+      ) : (
+        !error && (
+          <div className="text-center py-12">
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-[#1e1e2f] flex items-center justify-center">
+              <FaGamepad className="text-[#94a3b8] text-3xl" />
+            </div>
+            <p className="text-[#94a3b8] text-lg">No games found</p>
+            <p className="text-[#4a5568] text-sm mt-1">Create your first game to get started</p>
+          </div>
+        )
       )}
 
-      {/* Buttons Section */}
-      <div className="flex flex-col sm:flex-row gap-4 p-6 justify-center items-center">
-        <button
+      {/* Action Buttons */}
+      <div className="flex flex-col sm:flex-row gap-4 pt-4">
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={handleCreateGame}
-          className="w-full sm:w-auto px-6 py-3 text-white font-semibold text-lg rounded-2xl shadow-lg bg-gradient-to-r from-gray-500 to-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
+          className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#7c3aed] to-[#c084fc] text-white font-semibold flex items-center justify-center gap-2 hover:shadow-lg transition"
         >
-          Create a new game
-        </button>
+          <FaPlus size={14} />
+          Create New Game
+        </motion.button>
 
-        <button
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={handleBuyGame}
-          className="w-full sm:w-auto px-6 py-3 text-white font-semibold text-lg rounded-2xl shadow-lg bg-gradient-to-r from-blue-500 to-gray-500 transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
+          className="flex-1 py-3 rounded-xl bg-[#1e1e2f] border border-[#1e2a4a] text-[#c084fc] font-semibold flex items-center justify-center gap-2 hover:bg-[#2a2a3e] transition"
         >
-          Buy a game
-        </button>
+          <FaShoppingCart size={14} />
+          Buy More Games
+        </motion.button>
       </div>
     </div>
   );

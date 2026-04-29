@@ -47,7 +47,9 @@ export async function POST(req: NextRequest) {
         package: pac,
         amount: rs 
       },
-      return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard`,
+      return_url: process.env.NEXT_PUBLIC_SITE_URL 
+        ? `${process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '')}/dashboard`
+        : `${req.headers.get('origin') || 'http://localhost:3000'}/dashboard`,
     });
 
     // Save to Firestore
